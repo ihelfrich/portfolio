@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topological Turing Instability | Dr. Ian Helfrich</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-darker: #050505;
+            --text-light: #e8e6e3;
+            --text-dim: #9a9691;
+            --accent: #6b72d9;
+            --accent-bright: #8b92ff;
+            --glow: rgba(107, 114, 217, 0.3);
+            --divider: rgba(255, 255, 255, 0.08);
+        }
+
+        @font-face {
+            font-family: 'CameraPlain';
+            src: local('Helvetica Neue'), local('Arial');
+            font-weight: 100 900;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Custom Cursor */
+        #cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+            mix-blend-mode: difference;
+        }
+
+        #cursor.hover {
+            transform: scale(2);
+            background: var(--glow);
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem;
+            z-index: 1000;
+            background: linear-gradient(180deg, var(--bg-dark) 0%, transparent 100%);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 0.875rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        /* Main Container */
+        .container {
+            min-height: 100vh;
+            display: flex;
+            padding-top: 100px;
+        }
+
+        /* Sidebar Controls */
+        .controls {
+            position: fixed;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 280px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid var(--divider);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            z-index: 100;
+        }
+
+        .controls h2 {
+            font-size: 1.25rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            color: var(--text-light);
+        }
+
+        .param-group {
+            margin-bottom: 2rem;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-dim);
+        }
+
+        .param-value {
+            color: var(--accent-bright);
+            font-variant-numeric: tabular-nums;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: var(--divider);
+            outline: none;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--accent-bright);
+            transform: scale(1.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.75rem;
+            background: rgba(107, 114, 217, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent);
+            box-shadow: 0 0 30px var(--glow);
+            transform: translateY(-2px);
+        }
+
+        button.primary {
+            background: var(--accent);
+        }
+
+        /* Canvas Container */
+        .canvas-container {
+            flex: 1;
+            margin-left: 340px;
+            margin-right: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 800px;
+            height: 800px;
+            border: 1px solid var(--divider);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            image-rendering: pixelated;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 300px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid var(--divider);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .info-panel h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: var(--accent-bright);
+        }
+
+        .info-panel p {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+
+        .equation {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            background: rgba(107, 114, 217, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 2px solid var(--accent);
+            margin: 1rem 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 200;
+            color: var(--accent-bright);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Loading Animation */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.875rem;
+            color: var(--text-dim);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .controls {
+                position: relative;
+                left: 0;
+                transform: none;
+                margin: 2rem;
+                width: auto;
+            }
+
+            .canvas-container {
+                margin-left: 2rem;
+            }
+
+            .info-panel {
+                position: relative;
+                bottom: 0;
+                right: 0;
+                margin: 2rem;
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor"></div>
+
+    <header>
+        <div class="logo">Dr. Ian Helfrich — Topological Economics Lab</div>
+    </header>
+
+    <div class="container">
+        <div class="controls">
+            <h2>Field Parameters</h2>
+
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Topological Coupling (λ)</span>
+                    <span class="param-value" id="lambda-val">0.150</span>
+                </div>
+                <input type="range" id="lambda" min="0" max="0.3" step="0.001" value="0.15">
+            </div>
+
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Diffusion (κ)</span>
+                    <span class="param-value" id="kappa-val">0.001</span>
+                </div>
+                <input type="range" id="kappa" min="0" max="0.01" step="0.0001" value="0.001">
+            </div>
+
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Congestion (α)</span>
+                    <span class="param-value" id="alpha-val">1.000</span>
+                </div>
+                <input type="range" id="alpha" min="0.1" max="2" step="0.01" value="1">
+            </div>
+
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Kernel Width (σ₁)</span>
+                    <span class="param-value" id="sigma1-val">2.0</span>
+                </div>
+                <input type="range" id="sigma1" min="1" max="5" step="0.1" value="2">
+            </div>
+
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Kernel Width (σ₂)</span>
+                    <span class="param-value" id="sigma2-val">5.0</span>
+                </div>
+                <input type="range" id="sigma2" min="3" max="10" step="0.1" value="5">
+            </div>
+
+            <div class="button-group">
+                <button id="reset">Reset</button>
+                <button id="toggle" class="primary">Pause</button>
+            </div>
+
+            <div class="button-group">
+                <button id="export">Export PNG</button>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="canvas" width="512" height="512"></canvas>
+        </div>
+
+        <div class="info-panel">
+            <h3>Topological Turing Instability</h3>
+            <p>Real-time simulation of the field equation:</p>
+            <div class="equation">
+∂ₜy = M[κΔy + λ(K*y) - α(y-y₀)³]
+            </div>
+            <p>Watch as topological pressure generates endogenous city formation through pattern instability.</p>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="time">0.0</div>
+                    <div class="stat-label">Time</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="fps">60</div>
+                    <div class="stat-label">FPS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.querySelectorAll('button, input').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        });
+
+        // Canvas Setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const N = 128;
+        const L = 100.0;
+        const dx = L / N;
+
+        // State
+        let field = new Float32Array(N * N);
+        let fieldNext = new Float32Array(N * N);
+        let kernel = new Float32Array(N * N);
+        let running = true;
+        let time = 0;
+        let dt = 0.1;
+        let M = 1.0;
+
+        // Parameters
+        let params = {
+            lambda: 0.15,
+            kappa: 0.001,
+            alpha: 1.0,
+            sigma1: 2.0,
+            sigma2: 5.0
+        };
+
+        // Initialize random field
+        function initField() {
+            for (let i = 0; i < N * N; i++) {
+                field[i] = (Math.random() - 0.5) * 0.02;
+            }
+            time = 0;
+        }
+
+        // Mexican hat kernel
+        function computeKernel() {
+            const s1 = params.sigma1;
+            const s2 = params.sigma2;
+            let sum = 0;
+
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const x = (i - N/2) * dx;
+                    const y = (j - N/2) * dx;
+                    const r2 = x*x + y*y;
+                    const val = Math.exp(-r2/(2*s1*s1)) - 0.5*Math.exp(-r2/(2*s2*s2));
+                    kernel[i * N + j] = val;
+                    sum += val;
+                }
+            }
+
+            // Normalize
+            for (let i = 0; i < N * N; i++) {
+                kernel[i] /= sum;
+            }
+        }
+
+        // Convolution (simplified)
+        function convolve(field, kernel, result) {
+            const half = Math.floor(N / 2);
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    let sum = 0;
+                    for (let ki = -10; ki <= 10; ki++) {
+                        for (let kj = -10; kj <= 10; kj++) {
+                            const ii = (i + ki + N) % N;
+                            const jj = (j + kj + N) % N;
+                            const kii = (ki + half + N) % N;
+                            const kjj = (kj + half + N) % N;
+                            sum += field[ii * N + jj] * kernel[kii * N + kjj];
+                        }
+                    }
+                    result[i * N + j] = sum;
+                }
+            }
+        }
+
+        // Laplacian
+        function laplacian(field, result) {
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const ip = (i + 1) % N;
+                    const im = (i - 1 + N) % N;
+                    const jp = (j + 1) % N;
+                    const jm = (j - 1 + N) % N;
+
+                    const val = (
+                        field[ip * N + j] + field[im * N + j] +
+                        field[i * N + jp] + field[i * N + jm] -
+                        4 * field[i * N + j]
+                    ) / (dx * dx);
+
+                    result[i * N + j] = val;
+                }
+            }
+        }
+
+        // Time step
+        let convResult = new Float32Array(N * N);
+        let lapResult = new Float32Array(N * N);
+
+        function step() {
+            convolve(field, kernel, convResult);
+            laplacian(field, lapResult);
+
+            for (let i = 0; i < N * N; i++) {
+                const y = field[i];
+                const dydt = M * (
+                    params.kappa * lapResult[i] +
+                    params.lambda * convResult[i] -
+                    params.alpha * Math.pow(y, 3)
+                );
+                fieldNext[i] = y + dt * dydt;
+            }
+
+            [field, fieldNext] = [fieldNext, field];
+            time += dt;
+        }
+
+        // Render
+        function render() {
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // Find min/max for color scaling
+            let minVal = Infinity;
+            let maxVal = -Infinity;
+            for (let i = 0; i < N * N; i++) {
+                minVal = Math.min(minVal, field[i]);
+                maxVal = Math.max(maxVal, field[i]);
+            }
+
+            const range = maxVal - minVal || 1;
+
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const val = field[i * N + j];
+                    const normalized = (val - minVal) / range;
+
+                    // Beautiful color map (blue to purple to pink)
+                    const r = Math.floor(107 + normalized * 148);
+                    const g = Math.floor(114 - normalized * 50);
+                    const b = Math.floor(217 - normalized * 78);
+
+                    const scale = canvas.width / N;
+                    for (let si = 0; si < scale; si++) {
+                        for (let sj = 0; sj < scale; sj++) {
+                            const px = j * scale + sj;
+                            const py = i * scale + si;
+                            const idx = (py * canvas.width + px) * 4;
+                            data[idx] = r;
+                            data[idx + 1] = g;
+                            data[idx + 2] = b;
+                            data[idx + 3] = 255;
+                        }
+                    }
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Animation loop
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTime = 0;
+
+        function animate() {
+            const now = performance.now();
+            const delta = now - lastTime;
+            lastTime = now;
+
+            if (running) {
+                step();
+                render();
+
+                frameCount++;
+                fpsTime += delta;
+                if (fpsTime >= 1000) {
+                    document.getElementById('fps').textContent = frameCount;
+                    frameCount = 0;
+                    fpsTime = 0;
+                }
+
+                document.getElementById('time').textContent = time.toFixed(1);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Controls
+        function updateParam(id, displayId, decimals = 3) {
+            const slider = document.getElementById(id);
+            const display = document.getElementById(displayId);
+            slider.addEventListener('input', () => {
+                params[id] = parseFloat(slider.value);
+                display.textContent = slider.value.padStart(5, '0');
+                if (id.includes('sigma')) {
+                    computeKernel();
+                }
+            });
+        }
+
+        updateParam('lambda', 'lambda-val');
+        updateParam('kappa', 'kappa-val', 4);
+        updateParam('alpha', 'alpha-val');
+        updateParam('sigma1', 'sigma1-val', 1);
+        updateParam('sigma2', 'sigma2-val', 1);
+
+        document.getElementById('reset').addEventListener('click', () => {
+            initField();
+        });
+
+        document.getElementById('toggle').addEventListener('click', (e) => {
+            running = !running;
+            e.target.textContent = running ? 'Pause' : 'Resume';
+            e.target.classList.toggle('primary');
+        });
+
+        document.getElementById('export').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `turing-instability-t${time.toFixed(0)}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+
+        // Initialize
+        computeKernel();
+        initField();
+        animate();
+    </script>
+</body>
+</html>

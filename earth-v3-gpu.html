@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU-Accelerated City Formation | Land-Only Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #e8e6e3;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #6b72d9;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+            mix-blend-mode: difference;
+        }
+
+        #cursor.hover {
+            transform: scale(2);
+            background: rgba(107, 114, 217, 0.3);
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 200;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #9a9691;
+            letter-spacing: 0.05em;
+        }
+
+        .gpu-badge {
+            display: inline-block;
+            background: rgba(107, 114, 217, 0.2);
+            border: 1px solid #6b72d9;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .controls {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 320px;
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(30px);
+            pointer-events: all;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .control-section {
+            margin-bottom: 2rem;
+        }
+
+        .control-section h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: #6b72d9;
+        }
+
+        .param-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #9a9691;
+        }
+
+        .param-value {
+            color: #8b92ff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            outline: none;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #6b72d9;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(107, 114, 217, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #8b92ff;
+            transform: scale(1.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(107, 114, 217, 0.15);
+            border: 1px solid #6b72d9;
+            border-radius: 12px;
+            color: #e8e6e3;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        button:hover {
+            background: #6b72d9;
+            box-shadow: 0 0 30px rgba(107, 114, 217, 0.4);
+            transform: translateY(-2px);
+        }
+
+        button.active {
+            background: #6b72d9;
+        }
+
+        .stats {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            display: flex;
+            gap: 2rem;
+            pointer-events: none;
+        }
+
+        .stat {
+            text-align: left;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 200;
+            color: #8b92ff;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(107, 114, 217, 0.5);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #9a9691;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .instructions {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 0.75rem;
+            color: #9a9691;
+            text-align: right;
+            pointer-events: none;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1rem;
+            color: #9a9691;
+            z-index: 200;
+            text-align: center;
+        }
+
+        .loading-progress {
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: #6b72d9;
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor"></div>
+    <div id="loading" class="loading">
+        Loading Earth Textures...
+        <div class="loading-progress" id="loadProgress">Initializing GPU...</div>
+    </div>
+
+    <div class="ui-overlay">
+        <div class="title">GPU-Accelerated City Formation</div>
+        <div class="subtitle">Real Geography + WebGL Compute</div>
+        <div class="gpu-badge">⚡ Land-Only Simulation</div>
+    </div>
+
+    <div class="controls">
+        <div class="control-section">
+            <h3>Simulation</h3>
+            <button id="toggleSim" class="active">Pause Simulation</button>
+            <button id="reset">Reset Field</button>
+        </div>
+
+        <div class="control-section">
+            <h3>Field Parameters</h3>
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Coupling (λ)</span>
+                    <span class="param-value" id="lambda-val">0.250</span>
+                </div>
+                <input type="range" id="lambda" min="0" max="0.5" step="0.001" value="0.25">
+            </div>
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Diffusion (κ)</span>
+                    <span class="param-value" id="kappa-val">0.005</span>
+                </div>
+                <input type="range" id="kappa" min="0" max="0.02" step="0.0001" value="0.005">
+            </div>
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Time Steps/Frame</span>
+                    <span class="param-value" id="steps-val">3</span>
+                </div>
+                <input type="range" id="steps" min="1" max="10" step="1" value="3">
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h3>Visualization</h3>
+            <button id="toggleRotation" class="active">Auto-Rotate</button>
+            <button id="toggleField" class="active">Show Field</button>
+            <button id="toggleEarth" class="active">Show Earth</button>
+            <button id="toggleStars" class="active">Show Stars</button>
+        </div>
+
+        <div class="control-section">
+            <h3>View Presets</h3>
+            <button id="viewGlobal">Global</button>
+            <button id="viewAmerica">Americas</button>
+            <button id="viewEurope">Europe</button>
+            <button id="viewAsia">Asia Pacific</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="time">0.0</div>
+            <div class="stat-label">Time</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="cities">0</div>
+            <div class="stat-label">Cities</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="fps">60</div>
+            <div class="stat-label">FPS</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="landPercent">0%</div>
+            <div class="stat-label">Land Coverage</div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        Drag to rotate • Scroll to zoom • Click to inject energy
+    </div>
+
+    <div id="container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Custom cursor
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.querySelectorAll('button, input').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        });
+
+        // Three.js setup
+        const container = document.getElementById('container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        camera.position.z = 2.5;
+
+        // Starfield
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.7,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const starsVertices = [];
+        for (let i = 0; i < 10000; i++) {
+            const x = (Math.random() - 0.5) * 2000;
+            const y = (Math.random() - 0.5) * 2000;
+            const z = (Math.random() - 0.5) * 2000;
+            starsVertices.push(x, y, z);
+        }
+
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+        const starField = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starField);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(5, 3, 5);
+        scene.add(sunLight);
+
+        const fillLight = new THREE.DirectionalLight(0x6b72d9, 0.3);
+        fillLight.position.set(-5, -3, -5);
+        scene.add(fillLight);
+
+        // Earth sphere
+        const sphereGeometry = new THREE.SphereGeometry(1, 256, 256);
+
+        // Textures
+        const textureLoader = new THREE.TextureLoader();
+        let earthTexture, bumpTexture, landMaskTexture;
+        let texturesLoaded = 0;
+
+        function checkTexturesLoaded() {
+            texturesLoaded++;
+            document.getElementById('loadProgress').textContent = `Loading textures... ${texturesLoaded}/3`;
+            if (texturesLoaded === 3) {
+                initSimulation();
+            }
+        }
+
+        earthTexture = textureLoader.load(
+            'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+            checkTexturesLoaded
+        );
+        bumpTexture = textureLoader.load(
+            'https://unpkg.com/three-globe/example/img/earth-topology.png',
+            checkTexturesLoaded
+        );
+
+        // Use topology as land mask (higher values = land)
+        landMaskTexture = textureLoader.load(
+            'https://unpkg.com/three-globe/example/img/earth-topology.png',
+            checkTexturesLoaded
+        );
+
+        // GPU computation setup
+        const N = 512; // Field resolution
+        let simTime = 0;
+        let simRunning = true;
+        let autoRotate = true;
+        let showField = true;
+        let showEarth = true;
+        let showStars = true;
+        let stepsPerFrame = 3;
+
+        let params = {
+            lambda: 0.25,
+            kappa: 0.005,
+            dt: 0.03
+        };
+
+        // Create render targets for ping-pong
+        const rtOptions = {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType
+        };
+
+        let renderTargetA = new THREE.WebGLRenderTarget(N, N, rtOptions);
+        let renderTargetB = new THREE.WebGLRenderTarget(N, N, rtOptions);
+
+        // Land mask render target
+        let landMaskRT = new THREE.WebGLRenderTarget(N, N, {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            format: THREE.RGBAFormat
+        });
+
+        // Create orthographic scene for computation
+        const computeScene = new THREE.Scene();
+        const computeCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const computeGeometry = new THREE.PlaneGeometry(2, 2);
+
+        // Land mask shader - extract land from Earth texture
+        const landMaskMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                topo: { value: landMaskTexture }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D topo;
+                varying vec2 vUv;
+
+                void main() {
+                    vec4 topoColor = texture2D(topo, vUv);
+                    // Topology texture: darker = ocean, lighter = land
+                    float landMask = step(0.05, topoColor.r);
+                    gl_FragColor = vec4(landMask, landMask, landMask, 1.0);
+                }
+            `
+        });
+
+        // Simulation step shader - GPU PDE solver
+        const simulationMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uField: { value: null },
+                uLandMask: { value: null },
+                uLambda: { value: params.lambda },
+                uKappa: { value: params.kappa },
+                uDt: { value: params.dt },
+                uResolution: { value: new THREE.Vector2(N, N) }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D uField;
+                uniform sampler2D uLandMask;
+                uniform float uLambda;
+                uniform float uKappa;
+                uniform float uDt;
+                uniform vec2 uResolution;
+
+                varying vec2 vUv;
+
+                void main() {
+                    vec2 texel = 1.0 / uResolution;
+
+                    // Check if this is land
+                    float landMask = texture2D(uLandMask, vUv).r;
+
+                    // If ocean, return zero
+                    if (landMask < 0.5) {
+                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                        return;
+                    }
+
+                    // Current value
+                    float y = texture2D(uField, vUv).r;
+
+                    // Laplacian (diffusion)
+                    float laplacian = 0.0;
+                    laplacian += texture2D(uField, vUv + vec2(texel.x, 0.0)).r;
+                    laplacian += texture2D(uField, vUv - vec2(texel.x, 0.0)).r;
+                    laplacian += texture2D(uField, vUv + vec2(0.0, texel.y)).r;
+                    laplacian += texture2D(uField, vUv - vec2(0.0, texel.y)).r;
+                    laplacian -= 4.0 * y;
+                    laplacian *= 100.0;
+
+                    // Mexican hat convolution (simplified to 5x5)
+                    float conv = 0.0;
+                    float totalWeight = 0.0;
+
+                    for (float i = -2.0; i <= 2.0; i += 1.0) {
+                        for (float j = -2.0; j <= 2.0; j += 1.0) {
+                            vec2 offset = vec2(i, j) * texel;
+                            float r2 = (i*i + j*j) * 0.25;
+
+                            // Mexican hat kernel
+                            float weight = exp(-r2 / 8.0) - 0.5 * exp(-r2 / 50.0);
+
+                            float sample = texture2D(uField, vUv + offset).r;
+                            conv += weight * sample;
+                            totalWeight += abs(weight);
+                        }
+                    }
+                    conv /= totalWeight;
+
+                    // PDE: dy/dt = κ∇²y + λK*y - α y³
+                    float alpha = 1.0;
+                    float dydt = uKappa * laplacian + uLambda * conv - alpha * y * y * y;
+
+                    float yNext = y + uDt * dydt;
+
+                    // Only update if on land
+                    gl_FragColor = vec4(yNext, yNext, yNext, 1.0);
+                }
+            `
+        });
+
+        const computeMesh = new THREE.Mesh(computeGeometry, simulationMaterial);
+        computeScene.add(computeMesh);
+
+        // Display material for Earth
+        const sphereMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                earthTexture: { value: earthTexture },
+                bumpTexture: { value: bumpTexture },
+                fieldTexture: { value: null },
+                landMask: { value: null },
+                time: { value: 0 },
+                showField: { value: 1.0 },
+                showEarth: { value: 1.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                varying vec3 vViewPosition;
+
+                void main() {
+                    vUv = uv;
+                    vNormal = normalize(normalMatrix * normal);
+                    vPosition = position;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    vViewPosition = -mvPosition.xyz;
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D earthTexture;
+                uniform sampler2D bumpTexture;
+                uniform sampler2D fieldTexture;
+                uniform sampler2D landMask;
+                uniform float time;
+                uniform float showField;
+                uniform float showEarth;
+
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                varying vec3 vViewPosition;
+
+                void main() {
+                    // Earth base color
+                    vec3 earthColor = texture2D(earthTexture, vUv).rgb;
+
+                    // Land mask
+                    float isLand = texture2D(landMask, vUv).r;
+
+                    // Field intensity (normalized)
+                    float intensity = texture2D(fieldTexture, vUv).r;
+                    intensity = clamp(intensity * 2.0 + 0.5, 0.0, 1.0);
+
+                    // City glow colors
+                    vec3 glowColor = vec3(1.0, 0.85, 0.4);  // Warm yellow
+                    vec3 hotColor = vec3(1.0, 0.3, 0.1);    // Hot orange-red
+
+                    vec3 cityGlow = mix(glowColor, hotColor, intensity * intensity);
+
+                    // Atmospheric rim lighting
+                    vec3 viewDir = normalize(vViewPosition);
+                    float fresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 3.0);
+                    vec3 atmosphere = vec3(0.3, 0.5, 1.0) * fresnel * 0.5;
+
+                    // Combine layers
+                    vec3 color = earthColor * showEarth;
+
+                    // Only show cities on land
+                    if (isLand > 0.5 && intensity > 0.5) {
+                        float cityStrength = pow(intensity - 0.5, 2.0) * 4.0;
+
+                        // Pulsing effect
+                        float pulse = 0.7 + 0.3 * sin(time * 3.0 + intensity * 15.0);
+
+                        color += cityGlow * cityStrength * pulse * showField;
+                    }
+
+                    color += atmosphere;
+
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `
+        });
+
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+
+        // Initialize simulation
+        function initSimulation() {
+            document.getElementById('loadProgress').textContent = 'Generating land mask...';
+
+            // Render land mask
+            const landMaskMesh = new THREE.Mesh(computeGeometry, landMaskMaterial);
+            const landMaskScene = new THREE.Scene();
+            landMaskScene.add(landMaskMesh);
+            renderer.setRenderTarget(landMaskRT);
+            renderer.render(landMaskScene, computeCamera);
+
+            // Count land pixels
+            const landData = new Uint8Array(N * N * 4);
+            renderer.readRenderTargetPixels(landMaskRT, 0, 0, N, N, landData);
+            let landPixels = 0;
+            for (let i = 0; i < N * N; i++) {
+                if (landData[i * 4] > 128) landPixels++;
+            }
+            const landPercent = ((landPixels / (N * N)) * 100).toFixed(1);
+            document.getElementById('landPercent').textContent = landPercent + '%';
+
+            document.getElementById('loadProgress').textContent = `Computing on ${landPixels.toLocaleString()} land pixels only`;
+
+            // Initialize field with random noise on land only
+            const initialData = new Float32Array(N * N * 4);
+            for (let i = 0; i < N * N; i++) {
+                const isLand = landData[i * 4] > 128;
+                const val = isLand ? (Math.random() - 0.5) * 0.02 : 0;
+                initialData[i * 4] = val;
+                initialData[i * 4 + 1] = val;
+                initialData[i * 4 + 2] = val;
+                initialData[i * 4 + 3] = 1.0;
+            }
+
+            const initialTexture = new THREE.DataTexture(
+                initialData,
+                N, N,
+                THREE.RGBAFormat,
+                THREE.FloatType
+            );
+            initialTexture.needsUpdate = true;
+
+            // Copy initial data to render target
+            const initMaterial = new THREE.MeshBasicMaterial({ map: initialTexture });
+            const initMesh = new THREE.Mesh(computeGeometry, initMaterial);
+            const initScene = new THREE.Scene();
+            initScene.add(initMesh);
+
+            renderer.setRenderTarget(renderTargetA);
+            renderer.render(initScene, computeCamera);
+            renderer.setRenderTarget(null);
+
+            // Set uniforms
+            simulationMaterial.uniforms.uLandMask.value = landMaskRT.texture;
+            sphereMaterial.uniforms.landMask.value = landMaskRT.texture;
+            sphereMaterial.uniforms.fieldTexture.value = renderTargetA.texture;
+
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                animate();
+            }, 100);
+        }
+
+        function resetField() {
+            // Re-run initialization
+            renderer.setRenderTarget(landMaskRT);
+            const landMaskMesh = new THREE.Mesh(computeGeometry, landMaskMaterial);
+            const landMaskScene = new THREE.Scene();
+            landMaskScene.add(landMaskMesh);
+            renderer.render(landMaskScene, computeCamera);
+
+            const landData = new Uint8Array(N * N * 4);
+            renderer.readRenderTargetPixels(landMaskRT, 0, 0, N, N, landData);
+
+            const initialData = new Float32Array(N * N * 4);
+            for (let i = 0; i < N * N; i++) {
+                const isLand = landData[i * 4] > 128;
+                const val = isLand ? (Math.random() - 0.5) * 0.02 : 0;
+                initialData[i * 4] = val;
+                initialData[i * 4 + 1] = val;
+                initialData[i * 4 + 2] = val;
+                initialData[i * 4 + 3] = 1.0;
+            }
+
+            const initialTexture = new THREE.DataTexture(
+                initialData,
+                N, N,
+                THREE.RGBAFormat,
+                THREE.FloatType
+            );
+            initialTexture.needsUpdate = true;
+
+            const initMaterial = new THREE.MeshBasicMaterial({ map: initialTexture });
+            const initMesh = new THREE.Mesh(computeGeometry, initMaterial);
+            const initScene = new THREE.Scene();
+            initScene.add(initMesh);
+
+            renderer.setRenderTarget(renderTargetA);
+            renderer.render(initScene, computeCamera);
+            renderer.setRenderTarget(null);
+
+            simTime = 0;
+        }
+
+        // GPU simulation step
+        function stepSimulationGPU() {
+            if (!simRunning) return;
+
+            // Update parameters
+            simulationMaterial.uniforms.uLambda.value = params.lambda;
+            simulationMaterial.uniforms.uKappa.value = params.kappa;
+            simulationMaterial.uniforms.uDt.value = params.dt;
+
+            // Run multiple steps per frame
+            for (let i = 0; i < stepsPerFrame; i++) {
+                simulationMaterial.uniforms.uField.value = renderTargetA.texture;
+                renderer.setRenderTarget(renderTargetB);
+                renderer.render(computeScene, computeCamera);
+
+                // Swap
+                [renderTargetA, renderTargetB] = [renderTargetB, renderTargetA];
+
+                simTime += params.dt;
+            }
+
+            renderer.setRenderTarget(null);
+
+            // Update display
+            sphereMaterial.uniforms.fieldTexture.value = renderTargetA.texture;
+        }
+
+        // Count cities (periodically)
+        let cityCountFrame = 0;
+        function updateCityCount() {
+            if (cityCountFrame++ % 30 !== 0) return;
+
+            const pixels = new Float32Array(N * N * 4);
+            renderer.readRenderTargetPixels(renderTargetA, 0, 0, N, N, pixels);
+
+            let cityCount = 0;
+            for (let i = 0; i < N * N; i++) {
+                if (pixels[i * 4] > 0.3) cityCount++;
+            }
+
+            document.getElementById('cities').textContent = Math.floor(cityCount / 8);
+        }
+
+        // Mouse interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        renderer.domElement.addEventListener('click', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(sphere);
+
+            if (intersects.length > 0) {
+                const uv = intersects[0].uv;
+
+                // Create injection texture
+                const injectionData = new Float32Array(N * N * 4);
+                renderer.readRenderTargetPixels(renderTargetA, 0, 0, N, N, injectionData);
+
+                const i = Math.floor(uv.y * N);
+                const j = Math.floor(uv.x * N);
+                const radius = 10;
+
+                for (let di = -radius; di <= radius; di++) {
+                    for (let dj = -radius; dj <= radius; dj++) {
+                        const dist2 = di*di + dj*dj;
+                        if (dist2 > radius*radius) continue;
+                        const ii = (i + di + N) % N;
+                        const jj = (j + dj + N) % N;
+                        const idx = ii * N + jj;
+                        injectionData[idx * 4] += 0.2 * Math.exp(-dist2 / (radius * radius / 2));
+                    }
+                }
+
+                const injectionTexture = new THREE.DataTexture(
+                    injectionData, N, N,
+                    THREE.RGBAFormat, THREE.FloatType
+                );
+                injectionTexture.needsUpdate = true;
+
+                const injMaterial = new THREE.MeshBasicMaterial({ map: injectionTexture });
+                const injMesh = new THREE.Mesh(computeGeometry, injMaterial);
+                const injScene = new THREE.Scene();
+                injScene.add(injMesh);
+
+                renderer.setRenderTarget(renderTargetA);
+                renderer.render(injScene, computeCamera);
+                renderer.setRenderTarget(null);
+            }
+        });
+
+        // Camera controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        renderer.domElement.addEventListener('mousedown', () => isDragging = true);
+        renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                sphere.rotation.y += deltaX * 0.005;
+                sphere.rotation.x += deltaY * 0.005;
+
+                autoRotate = false;
+                document.getElementById('toggleRotation').classList.remove('active');
+            }
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            camera.position.z += e.deltaY * 0.001;
+            camera.position.z = Math.max(1.5, Math.min(5, camera.position.z));
+        });
+
+        // UI Controls
+        function updateParam(id, displayId, paramName) {
+            const slider = document.getElementById(id);
+            const display = document.getElementById(displayId);
+            slider.addEventListener('input', () => {
+                if (paramName === 'steps') {
+                    stepsPerFrame = parseInt(slider.value);
+                } else {
+                    params[paramName] = parseFloat(slider.value);
+                }
+                display.textContent = slider.value;
+            });
+        }
+
+        updateParam('lambda', 'lambda-val', 'lambda');
+        updateParam('kappa', 'kappa-val', 'kappa');
+        updateParam('steps', 'steps-val', 'steps');
+
+        document.getElementById('toggleSim').addEventListener('click', (e) => {
+            simRunning = !simRunning;
+            e.target.textContent = simRunning ? 'Pause Simulation' : 'Resume Simulation';
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleRotation').addEventListener('click', (e) => {
+            autoRotate = !autoRotate;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleField').addEventListener('click', (e) => {
+            showField = !showField;
+            sphereMaterial.uniforms.showField.value = showField ? 1.0 : 0.0;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleEarth').addEventListener('click', (e) => {
+            showEarth = !showEarth;
+            sphereMaterial.uniforms.showEarth.value = showEarth ? 1.0 : 0.0;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleStars').addEventListener('click', (e) => {
+            showStars = !showStars;
+            starField.visible = showStars;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('reset').addEventListener('click', resetField);
+
+        // View presets
+        document.getElementById('viewGlobal').addEventListener('click', () => {
+            sphere.rotation.set(0, 0, 0);
+            camera.position.set(0, 0, 2.5);
+        });
+
+        document.getElementById('viewAmerica').addEventListener('click', () => {
+            sphere.rotation.set(0.3, -1.5, 0);
+        });
+
+        document.getElementById('viewEurope').addEventListener('click', () => {
+            sphere.rotation.set(0.8, -0.2, 0);
+        });
+
+        document.getElementById('viewAsia').addEventListener('click', () => {
+            sphere.rotation.set(0.4, 1.8, 0);
+        });
+
+        // Animation loop
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTime = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const now = performance.now();
+            const delta = now - lastTime;
+            lastTime = now;
+
+            stepSimulationGPU();
+            updateCityCount();
+
+            if (autoRotate) {
+                sphere.rotation.y += 0.001;
+            }
+
+            sphereMaterial.uniforms.time.value = simTime;
+
+            renderer.render(scene, camera);
+
+            frameCount++;
+            fpsTime += delta;
+            if (fpsTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                frameCount = 0;
+                fpsTime = 0;
+            }
+
+            document.getElementById('time').textContent = simTime.toFixed(1);
+        }
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

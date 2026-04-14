@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Formation on Earth | Real Geography</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #e8e6e3;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #6b72d9;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+            mix-blend-mode: difference;
+        }
+
+        #cursor.hover {
+            transform: scale(2);
+            background: rgba(107, 114, 217, 0.3);
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 200;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #9a9691;
+            letter-spacing: 0.05em;
+        }
+
+        .controls {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 320px;
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(30px);
+            pointer-events: all;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .control-section {
+            margin-bottom: 2rem;
+        }
+
+        .control-section h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: #6b72d9;
+        }
+
+        .param-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #9a9691;
+        }
+
+        .param-value {
+            color: #8b92ff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            outline: none;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #6b72d9;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(107, 114, 217, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #8b92ff;
+            transform: scale(1.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(107, 114, 217, 0.15);
+            border: 1px solid #6b72d9;
+            border-radius: 12px;
+            color: #e8e6e3;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        button:hover {
+            background: #6b72d9;
+            box-shadow: 0 0 30px rgba(107, 114, 217, 0.4);
+            transform: translateY(-2px);
+        }
+
+        button.active {
+            background: #6b72d9;
+        }
+
+        .stats {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            display: flex;
+            gap: 2rem;
+            pointer-events: none;
+        }
+
+        .stat {
+            text-align: left;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 200;
+            color: #8b92ff;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(107, 114, 217, 0.5);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #9a9691;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .instructions {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 0.75rem;
+            color: #9a9691;
+            text-align: right;
+            pointer-events: none;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1rem;
+            color: #9a9691;
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor"></div>
+    <div id="loading" class="loading">Loading Earth Textures...</div>
+
+    <div class="ui-overlay">
+        <div class="title">City Formation on Earth</div>
+        <div class="subtitle">Real Geography + Topological Economics</div>
+    </div>
+
+    <div class="controls">
+        <div class="control-section">
+            <h3>Simulation</h3>
+            <button id="toggleSim" class="active">Pause Simulation</button>
+            <button id="reset">Reset Field</button>
+        </div>
+
+        <div class="control-section">
+            <h3>Field Parameters</h3>
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Coupling (λ)</span>
+                    <span class="param-value" id="lambda-val">0.200</span>
+                </div>
+                <input type="range" id="lambda" min="0" max="0.5" step="0.001" value="0.2">
+            </div>
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Diffusion (κ)</span>
+                    <span class="param-value" id="kappa-val">0.003</span>
+                </div>
+                <input type="range" id="kappa" min="0" max="0.01" step="0.0001" value="0.003">
+            </div>
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Time Step</span>
+                    <span class="param-value" id="dt-val">0.05</span>
+                </div>
+                <input type="range" id="dt" min="0.01" max="0.2" step="0.01" value="0.05">
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h3>Visualization</h3>
+            <button id="toggleRotation" class="active">Auto-Rotate</button>
+            <button id="toggleField" class="active">Show Field</button>
+            <button id="toggleEarth" class="active">Show Earth</button>
+            <button id="toggleStars" class="active">Show Stars</button>
+        </div>
+
+        <div class="control-section">
+            <h3>View Presets</h3>
+            <button id="viewGlobal">Global</button>
+            <button id="viewAmerica">Americas</button>
+            <button id="viewEurope">Europe</button>
+            <button id="viewAsia">Asia Pacific</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="time">0.0</div>
+            <div class="stat-label">Time</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="cities">0</div>
+            <div class="stat-label">Cities</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="fps">60</div>
+            <div class="stat-label">FPS</div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        Drag to rotate • Scroll to zoom • Click to inject energy
+    </div>
+
+    <div id="container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Custom cursor
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.querySelectorAll('button, input').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        });
+
+        // Three.js setup
+        const container = document.getElementById('container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
+        container.appendChild(renderer.domElement);
+
+        camera.position.z = 2.5;
+
+        // Starfield background
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.7,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const starsVertices = [];
+        for (let i = 0; i < 10000; i++) {
+            const x = (Math.random() - 0.5) * 2000;
+            const y = (Math.random() - 0.5) * 2000;
+            const z = (Math.random() - 0.5) * 2000;
+            starsVertices.push(x, y, z);
+        }
+
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+        const starField = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starField);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(5, 3, 5);
+        scene.add(sunLight);
+
+        const fillLight = new THREE.DirectionalLight(0x6b72d9, 0.3);
+        fillLight.position.set(-5, -3, -5);
+        scene.add(fillLight);
+
+        // Earth sphere - HIGHER RESOLUTION
+        const sphereGeometry = new THREE.SphereGeometry(1, 256, 256);
+
+        // Textures
+        const textureLoader = new THREE.TextureLoader();
+        const earthTexture = textureLoader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg');
+        const bumpTexture = textureLoader.load('https://unpkg.com/three-globe/example/img/earth-topology.png');
+
+        // Field texture - SMALLER FOR SPEED
+        const fieldSize = 128;
+        const fieldData = new Uint8Array(fieldSize * fieldSize * 4);
+        const fieldTexture = new THREE.DataTexture(fieldData, fieldSize, fieldSize, THREE.RGBAFormat);
+        fieldTexture.needsUpdate = true;
+
+        const sphereMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                earthTexture: { value: earthTexture },
+                bumpTexture: { value: bumpTexture },
+                fieldTexture: { value: fieldTexture },
+                time: { value: 0 },
+                showField: { value: 1.0 },
+                showEarth: { value: 1.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                varying vec3 vViewPosition;
+
+                void main() {
+                    vUv = uv;
+                    vNormal = normalize(normalMatrix * normal);
+                    vPosition = position;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    vViewPosition = -mvPosition.xyz;
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D earthTexture;
+                uniform sampler2D bumpTexture;
+                uniform sampler2D fieldTexture;
+                uniform float time;
+                uniform float showField;
+                uniform float showEarth;
+
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                varying vec3 vViewPosition;
+
+                void main() {
+                    // Earth base color
+                    vec3 earthColor = texture2D(earthTexture, vUv).rgb;
+
+                    // Field intensity
+                    vec4 fieldValue = texture2D(fieldTexture, vUv);
+                    float intensity = fieldValue.r;
+
+                    // City glow colors
+                    vec3 glowColor = vec3(1.0, 0.8, 0.3); // Warm yellow
+                    vec3 hotColor = vec3(1.0, 0.4, 0.2);   // Hot orange-red
+
+                    vec3 cityGlow = mix(glowColor, hotColor, intensity * intensity);
+
+                    // Atmospheric rim lighting
+                    vec3 viewDir = normalize(vViewPosition);
+                    float fresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 3.0);
+                    vec3 atmosphere = vec3(0.3, 0.5, 1.0) * fresnel * 0.5;
+
+                    // Combine layers
+                    vec3 color = earthColor * showEarth;
+                    color += cityGlow * intensity * intensity * showField * 2.0;
+                    color += atmosphere;
+
+                    // Add subtle pulsing to cities
+                    float pulse = 0.5 + 0.5 * sin(time * 2.0 + intensity * 10.0);
+                    color += cityGlow * intensity * pulse * 0.2 * showField;
+
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `
+        });
+
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+
+        // Field simulation - OPTIMIZED
+        const N = fieldSize;
+        let field = new Float32Array(N * N);
+        let fieldNext = new Float32Array(N * N);
+
+        // Pre-compute kernel once - SMALLER FOR SPEED
+        const kernelSize = 11;
+        let kernel = new Float32Array(kernelSize * kernelSize);
+
+        let params = {
+            lambda: 0.2,
+            kappa: 0.003,
+            alpha: 1.0,
+            sigma1: 2.0,
+            sigma2: 5.0,
+            dt: 0.05
+        };
+
+        let simTime = 0;
+        let simRunning = true;
+        let autoRotate = true;
+        let showField = true;
+        let showEarth = true;
+        let showStars = true;
+
+        // Initialize
+        function initField() {
+            for (let i = 0; i < N * N; i++) {
+                field[i] = (Math.random() - 0.5) * 0.015;
+            }
+            simTime = 0;
+        }
+
+        // Compute kernel ONCE
+        function computeKernel() {
+            const half = Math.floor(kernelSize / 2);
+            const s1 = params.sigma1;
+            const s2 = params.sigma2;
+            let sum = 0;
+
+            for (let i = 0; i < kernelSize; i++) {
+                for (let j = 0; j < kernelSize; j++) {
+                    const x = (i - half) * 0.5;
+                    const y = (j - half) * 0.5;
+                    const r2 = x*x + y*y;
+                    const val = Math.exp(-r2/(2*s1*s1)) - 0.5*Math.exp(-r2/(2*s2*s2));
+                    kernel[i * kernelSize + j] = val;
+                    sum += val;
+                }
+            }
+
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                kernel[i] /= Math.abs(sum);
+            }
+        }
+
+        // OPTIMIZED convolution
+        let convResult = new Float32Array(N * N);
+        function convolve() {
+            const half = Math.floor(kernelSize / 2);
+
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    let sum = 0;
+                    for (let ki = -half; ki <= half; ki++) {
+                        for (let kj = -half; kj <= half; kj++) {
+                            const ii = (i + ki + N) % N;
+                            const jj = (j + kj + N) % N;
+                            sum += field[ii * N + jj] * kernel[(ki + half) * kernelSize + (kj + half)];
+                        }
+                    }
+                    convResult[i * N + j] = sum;
+                }
+            }
+        }
+
+        // OPTIMIZED Laplacian
+        let lapResult = new Float32Array(N * N);
+        function laplacian() {
+            const factor = 100;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const ip = (i + 1) % N;
+                    const im = (i - 1 + N) % N;
+                    const jp = (j + 1) % N;
+                    const jm = (j - 1 + N) % N;
+
+                    lapResult[i * N + j] = (
+                        field[ip * N + j] + field[im * N + j] +
+                        field[i * N + jp] + field[i * N + jm] -
+                        4 * field[i * N + j]
+                    ) * factor;
+                }
+            }
+        }
+
+        // Time step - VECTORIZED
+        function stepSimulation() {
+            if (!simRunning) return;
+
+            convolve();
+            laplacian();
+
+            const dt = params.dt;
+            const k = params.kappa;
+            const l = params.lambda;
+            const a = params.alpha;
+
+            for (let i = 0; i < N * N; i++) {
+                const y = field[i];
+                const dydt = k * lapResult[i] + l * convResult[i] - a * y * y * y;
+                fieldNext[i] = y + dt * dydt;
+            }
+
+            [field, fieldNext] = [fieldNext, field];
+            simTime += dt;
+        }
+
+        // Update texture - BATCHED
+        let frameCounter = 0;
+        function updateFieldTexture() {
+            // Only update texture every N frames for performance
+            if (frameCounter++ % 2 !== 0) return;
+
+            let minVal = Infinity;
+            let maxVal = -Infinity;
+
+            for (let i = 0; i < N * N; i++) {
+                const val = field[i];
+                if (val < minVal) minVal = val;
+                if (val > maxVal) maxVal = val;
+            }
+
+            const range = maxVal - minVal || 1;
+            let cityCount = 0;
+
+            for (let i = 0; i < N * N; i++) {
+                const val = field[i];
+                const normalized = Math.max(0, Math.min(1, (val - minVal) / range));
+
+                if (normalized > 0.65) cityCount++;
+
+                const intensity = normalized * 255;
+                fieldData[i * 4] = intensity;
+                fieldData[i * 4 + 1] = intensity;
+                fieldData[i * 4 + 2] = intensity;
+                fieldData[i * 4 + 3] = 255;
+            }
+
+            fieldTexture.needsUpdate = true;
+            document.getElementById('cities').textContent = Math.floor(cityCount / 15);
+        }
+
+        // Mouse interaction - OPTIMIZED
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        renderer.domElement.addEventListener('click', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(sphere);
+
+            if (intersects.length > 0) {
+                const uv = intersects[0].uv;
+                const i = Math.floor(uv.y * N);
+                const j = Math.floor(uv.x * N);
+
+                const radius = 8;
+                for (let di = -radius; di <= radius; di++) {
+                    for (let dj = -radius; dj <= radius; dj++) {
+                        const dist2 = di*di + dj*dj;
+                        if (dist2 > radius*radius) continue;
+                        const ii = (i + di + N) % N;
+                        const jj = (j + dj + N) % N;
+                        field[ii * N + jj] += 0.15 * Math.exp(-dist2 / (radius * radius / 2));
+                    }
+                }
+            }
+        });
+
+        // Camera controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        renderer.domElement.addEventListener('mousedown', () => isDragging = true);
+        renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                sphere.rotation.y += deltaX * 0.005;
+                sphere.rotation.x += deltaY * 0.005;
+
+                autoRotate = false;
+                document.getElementById('toggleRotation').classList.remove('active');
+            }
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            camera.position.z += e.deltaY * 0.001;
+            camera.position.z = Math.max(1.5, Math.min(5, camera.position.z));
+        });
+
+        // Controls
+        function updateParam(id, displayId) {
+            const slider = document.getElementById(id);
+            const display = document.getElementById(displayId);
+            slider.addEventListener('input', () => {
+                params[id] = parseFloat(slider.value);
+                display.textContent = slider.value;
+            });
+        }
+
+        updateParam('lambda', 'lambda-val');
+        updateParam('kappa', 'kappa-val');
+        updateParam('dt', 'dt-val');
+
+        document.getElementById('toggleSim').addEventListener('click', (e) => {
+            simRunning = !simRunning;
+            e.target.textContent = simRunning ? 'Pause Simulation' : 'Resume Simulation';
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleRotation').addEventListener('click', (e) => {
+            autoRotate = !autoRotate;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleField').addEventListener('click', (e) => {
+            showField = !showField;
+            sphereMaterial.uniforms.showField.value = showField ? 1.0 : 0.0;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleEarth').addEventListener('click', (e) => {
+            showEarth = !showEarth;
+            sphereMaterial.uniforms.showEarth.value = showEarth ? 1.0 : 0.0;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleStars').addEventListener('click', (e) => {
+            showStars = !showStars;
+            starField.visible = showStars;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('reset').addEventListener('click', () => initField());
+
+        // View presets
+        document.getElementById('viewGlobal').addEventListener('click', () => {
+            sphere.rotation.set(0, 0, 0);
+            camera.position.set(0, 0, 2.5);
+        });
+
+        document.getElementById('viewAmerica').addEventListener('click', () => {
+            sphere.rotation.set(0.3, -1.5, 0);
+        });
+
+        document.getElementById('viewEurope').addEventListener('click', () => {
+            sphere.rotation.set(0.8, -0.2, 0);
+        });
+
+        document.getElementById('viewAsia').addEventListener('click', () => {
+            sphere.rotation.set(0.4, 1.8, 0);
+        });
+
+        // Animation loop - OPTIMIZED
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTime = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const now = performance.now();
+            const delta = now - lastTime;
+            lastTime = now;
+
+            stepSimulation();
+            updateFieldTexture();
+
+            if (autoRotate) {
+                sphere.rotation.y += 0.001;
+            }
+
+            sphereMaterial.uniforms.time.value = simTime;
+
+            renderer.render(scene, camera);
+
+            frameCount++;
+            fpsTime += delta;
+            if (fpsTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                frameCount = 0;
+                fpsTime = 0;
+            }
+
+            document.getElementById('time').textContent = simTime.toFixed(1);
+        }
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize
+        document.getElementById('loading').textContent = 'Computing initial field...';
+        computeKernel();
+        initField();
+
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+            animate();
+        }, 100);
+    </script>
+</body>
+</html>

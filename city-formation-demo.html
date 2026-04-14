@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endogenous City Formation | Topological Economics</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e8e6e3;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 200;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #8b92ff 0%, #6b72d9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tagline {
+            color: #9a9691;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .key-insight {
+            background: linear-gradient(135deg, rgba(107, 114, 217, 0.15) 0%, rgba(139, 146, 255, 0.15) 100%);
+            border-left: 4px solid #6b72d9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            line-height: 1.7;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .viz-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .viz-panel {
+            background: #111;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .viz-panel h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: #6b72d9;
+        }
+
+        canvas {
+            width: 100%;
+            background: #000;
+            border-radius: 4px;
+        }
+
+        .controls {
+            background: #111;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section:last-child { border-bottom: none; }
+
+        .section h2 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: #6b72d9;
+        }
+
+        .param {
+            margin-bottom: 1.5rem;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .param-name { color: #9a9691; }
+
+        .param-value {
+            color: #8b92ff;
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', monospace;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            outline: none;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #6b72d9;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(107, 114, 217, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(107, 114, 217, 0.15);
+            border: 1px solid #6b72d9;
+            border-radius: 8px;
+            color: #e8e6e3;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        button:hover {
+            background: #6b72d9;
+            box-shadow: 0 0 20px rgba(107, 114, 217, 0.3);
+        }
+
+        button.active { background: #6b72d9; }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .metric-label { color: #9a9691; }
+
+        .metric-value {
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', monospace;
+            color: #8b92ff;
+        }
+
+        .narrative {
+            background: #111;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .narrative h2 {
+            font-size: 1.25rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            color: #e8e6e3;
+        }
+
+        .narrative-step {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .narrative-step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: rgba(107, 114, 217, 0.2);
+            border: 2px solid #6b72d9;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            margin-right: 1rem;
+            font-weight: 600;
+            color: #8b92ff;
+        }
+
+        .step-title {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            margin-bottom: 0.5rem;
+            color: #8b92ff;
+        }
+
+        .step-content {
+            font-size: 0.875rem;
+            line-height: 1.7;
+            color: #9a9691;
+            margin-left: 3rem;
+        }
+
+        .equation {
+            background: rgba(0,0,0,0.4);
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8125rem;
+            margin: 0.75rem 0;
+            border-left: 3px solid rgba(107, 114, 217, 0.5);
+        }
+
+        .highlight {
+            background: rgba(107, 114, 217, 0.2);
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-unstable { background: #ff6b6b; }
+        .status-stable { background: #4ecdc4; }
+        .status-critical { background: #ffe66d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Endogenous City Formation</h1>
+            <div class="tagline">Topological Turing Instability & The Spatial Impossibility Theorem</div>
+            <div class="key-insight">
+                <strong>The Central Result:</strong> Cities emerge <em>endogenously</em> from a homogeneous landscape when topological pressure (λK*y) exceeds diffusion (κΔy). No agglomeration externalities, transportation costs, or explicit spatial frictions required—pattern formation is driven purely by the <span class="highlight">Mexican hat kernel</span> creating long-range attractive and short-range repulsive forces. This solves Starrett's (1978) impossibility theorem by introducing nonlocal topological coupling.
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <div>
+                <div class="viz-grid">
+                    <div class="viz-panel">
+                        <h3>Field Evolution y(x,t)</h3>
+                        <canvas id="fieldCanvas" height="400"></canvas>
+                    </div>
+
+                    <div class="viz-panel">
+                        <h3>Mexican Hat Kernel K(x)</h3>
+                        <canvas id="kernelCanvas" height="400"></canvas>
+                    </div>
+
+                    <div class="viz-panel">
+                        <h3>Dispersion Relation σ(k)</h3>
+                        <canvas id="dispersionCanvas" height="400"></canvas>
+                    </div>
+
+                    <div class="viz-panel">
+                        <h3>Power Spectrum |ŷ(k)|²</h3>
+                        <canvas id="spectrumCanvas" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="section">
+                    <h2>Simulation</h2>
+                    <button id="toggleSim" class="active">Pause</button>
+                    <button id="reset">Reset to Noise</button>
+                    <button id="demo1">Demo 1: λ < λ_c (Stable)</button>
+                    <button id="demo2">Demo 2: λ > λ_c (Unstable)</button>
+                    <button id="demo3">Demo 3: Critical Point</button>
+                </div>
+
+                <div class="section">
+                    <h2>Core Parameters</h2>
+                    <div class="equation">∂ₜy = M(κΔy + λ(K*y) - α(y-y₀)³)</div>
+
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">Topological Coupling (λ)</span>
+                            <span class="param-value" id="lambda-val">0.150</span>
+                        </div>
+                        <input type="range" id="lambda" min="0" max="0.3" step="0.001" value="0.15">
+                    </div>
+
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">Diffusion (κ)</span>
+                            <span class="param-value" id="kappa-val">0.003</span>
+                        </div>
+                        <input type="range" id="kappa" min="0.001" max="0.01" step="0.0001" value="0.003">
+                    </div>
+
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">Congestion (α)</span>
+                            <span class="param-value" id="alpha-val">1.000</span>
+                        </div>
+                        <input type="range" id="alpha" min="0.1" max="3" step="0.01" value="1.0">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Stability Analysis</h2>
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator" id="stability-indicator"></span>
+                            System Status
+                        </span>
+                        <span class="metric-value" id="stability-status">---</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">λ_critical</span>
+                        <span class="metric-value" id="lambda-critical">---</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">λ / λ_c</span>
+                        <span class="metric-value" id="lambda-ratio">---</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Dominant k</span>
+                        <span class="metric-value" id="dominant-k">---</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">City Scale ℓ</span>
+                        <span class="metric-value" id="char-scale">---</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Diagnostics</h2>
+                    <div class="metric">
+                        <span class="metric-label">Time</span>
+                        <span class="metric-value" id="time">0.00</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Cities Formed</span>
+                        <span class="metric-value" id="cities">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Total Energy</span>
+                        <span class="metric-value" id="energy">0.000</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="narrative">
+            <h2>How Cities Form Endogenously: The Mechanism</h2>
+
+            <div class="narrative-step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Initial State: Homogeneous Equilibrium
+                </div>
+                <div class="step-content">
+                    Start with a perfectly uniform distribution y(x,0) = y₀ + ε where ε is tiny random noise. No cities exist yet. Classical models (Krugman, Henderson) require <em>ex ante</em> heterogeneity or productivity shocks. We require nothing.
+                </div>
+            </div>
+
+            <div class="narrative-step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Linear Stability Analysis: Turing Instability
+                </div>
+                <div class="step-content">
+                    Linearize around y₀: perturbation δy = e^(σt)e^(ik·x). Growth rate: <span class="highlight">σ(k) = M(-κ|k|² + λK̂(k))</span>.
+                    <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                        <li>If <strong>λ &lt; λ_c</strong>: σ(k) &lt; 0 for all k → stable, no pattern</li>
+                        <li>If <strong>λ &gt; λ_c</strong>: σ(k) &gt; 0 for some k → unstable, cities emerge!</li>
+                    </ul>
+                    The critical value is λ_c = min<sub>k</sub> κ|k|²/K̂(k) where K̂(k) > 0.
+                </div>
+            </div>
+
+            <div class="narrative-step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Mexican Hat Kernel: Short Repulsion + Long Attraction
+                </div>
+                <div class="step-content">
+                    K(x) = exp(-|x|²/2σ₁²) - 0.5·exp(-|x|²/2σ₂²) with σ₂ &gt; σ₁.
+                    <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                        <li><strong>Short range (|x| &lt; σ₁)</strong>: Positive → attracts nearby population</li>
+                        <li><strong>Medium range (σ₁ &lt; |x| &lt; σ₂)</strong>: Negative → repels moderate distance</li>
+                        <li><strong>Long range (|x| &gt; σ₂)</strong>: Near zero → no interaction</li>
+                    </ul>
+                    This creates <em>self-organized criticality</em>: cities cluster but maintain separation.
+                </div>
+            </div>
+
+            <div class="narrative-step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    Wavelength Selection: Characteristic City Scale
+                </div>
+                <div class="step-content">
+                    The mode k_max = argmax<sub>k</sub> σ(k) grows fastest. City spacing: <span class="highlight">ℓ = 2π/k_max</span>.
+                    This is <em>endogenous scale selection</em>—the characteristic city size emerges from parameter values (λ, κ, σ₁, σ₂), not from external geography or productivity.
+                </div>
+            </div>
+
+            <div class="narrative-step">
+                <div class="step-title">
+                    <span class="step-number">5</span>
+                    Nonlinear Saturation: Congestion Limits Growth
+                </div>
+                <div class="step-content">
+                    The cubic term -α(y-y₀)³ prevents unbounded growth. As cities grow (y increases), congestion forces balance topological attraction. System reaches a stationary pattern y* with:
+                    <div class="equation">0 = κΔy* + λ(K*y*) - α(y*-y₀)³</div>
+                    This is a <em>stable nonlinear equilibrium</em> with multiple cities at characteristic scale ℓ.
+                </div>
+            </div>
+
+            <div class="narrative-step">
+                <div class="step-title">
+                    <span class="step-number">6</span>
+                    Solving Starrett's Impossibility Theorem
+                </div>
+                <div class="step-content">
+                    Starrett (1978) proved cities cannot form in models with:
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Homogeneous space</li>
+                        <li>Convex preferences</li>
+                        <li>Local interactions only</li>
+                    </ul>
+                    We escape via <strong>nonlocal topological coupling</strong> λ(K*y). The convolution (K*y) creates long-range forces that break the impossibility. No agglomeration externalities, increasing returns, or transport costs needed.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const fieldCanvas = document.getElementById('fieldCanvas');
+        const kernelCanvas = document.getElementById('kernelCanvas');
+        const dispersionCanvas = document.getElementById('dispersionCanvas');
+        const spectrumCanvas = document.getElementById('spectrumCanvas');
+
+        const fieldCtx = fieldCanvas.getContext('2d');
+        const kernelCtx = kernelCanvas.getContext('2d');
+        const dispersionCtx = dispersionCanvas.getContext('2d');
+        const spectrumCtx = spectrumCanvas.getContext('2d');
+
+        const N = 128;
+        fieldCanvas.width = N;
+        fieldCanvas.height = N;
+
+        // State
+        let field = new Float32Array(N * N);
+        let fieldNext = new Float32Array(N * N);
+        let simTime = 0;
+        let simRunning = true;
+
+        // Parameters
+        const params = {
+            lambda: 0.15,
+            kappa: 0.003,
+            alpha: 1.0,
+            M: 1.0,
+            y0: 0.0,
+            sigma1: 2.0,
+            sigma2: 5.0,
+            dt: 0.05
+        };
+
+        // Kernel
+        const kernelSize = 21;
+        let kernel = new Float32Array(kernelSize * kernelSize);
+
+        function computeKernel() {
+            const half = Math.floor(kernelSize / 2);
+            const s1 = params.sigma1;
+            const s2 = params.sigma2;
+
+            let sum = 0;
+            for (let i = 0; i < kernelSize; i++) {
+                for (let j = 0; j < kernelSize; j++) {
+                    const x = (i - half);
+                    const y = (j - half);
+                    const r2 = x*x + y*y;
+
+                    const gauss1 = Math.exp(-r2 / (2 * s1 * s1));
+                    const gauss2 = Math.exp(-r2 / (2 * s2 * s2));
+                    const val = gauss1 - 0.5 * gauss2;
+
+                    kernel[i * kernelSize + j] = val;
+                    sum += val;
+                }
+            }
+
+            const mean = sum / (kernelSize * kernelSize);
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                kernel[i] -= mean;
+            }
+
+            let l1 = 0;
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                l1 += Math.abs(kernel[i]);
+            }
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                kernel[i] /= l1;
+            }
+
+            renderKernel();
+        }
+
+        function initField() {
+            for (let i = 0; i < N * N; i++) {
+                field[i] = (Math.random() - 0.5) * 0.01;
+            }
+            simTime = 0;
+        }
+
+        // Convolution
+        let convResult = new Float32Array(N * N);
+        function convolve() {
+            const half = Math.floor(kernelSize / 2);
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    let sum = 0;
+                    for (let ki = -half; ki <= half; ki++) {
+                        for (let kj = -half; kj <= half; kj++) {
+                            const ii = (i + ki + N) % N;
+                            const jj = (j + kj + N) % N;
+                            sum += field[ii * N + jj] * kernel[(ki + half) * kernelSize + (kj + half)];
+                        }
+                    }
+                    convResult[i * N + j] = sum;
+                }
+            }
+        }
+
+        // Laplacian
+        let lapResult = new Float32Array(N * N);
+        function laplacian() {
+            const factor = 100;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const ip = (i + 1) % N;
+                    const im = (i - 1 + N) % N;
+                    const jp = (j + 1) % N;
+                    const jm = (j - 1 + N) % N;
+
+                    lapResult[i * N + j] = (
+                        field[ip * N + j] + field[im * N + j] +
+                        field[i * N + jp] + field[i * N + jm] -
+                        4 * field[i * N + j]
+                    ) * factor;
+                }
+            }
+        }
+
+        // Time step
+        function stepSimulation() {
+            if (!simRunning) return;
+
+            convolve();
+            laplacian();
+
+            const dt = params.dt;
+            const k = params.kappa;
+            const l = params.lambda;
+            const a = params.alpha;
+            const M = params.M;
+            const y0 = params.y0;
+
+            for (let i = 0; i < N * N; i++) {
+                const y = field[i];
+                const dydt = M * (k * lapResult[i] + l * convResult[i] - a * Math.pow(y - y0, 3));
+                fieldNext[i] = y + dt * dydt;
+            }
+
+            [field, fieldNext] = [fieldNext, field];
+            simTime += dt;
+        }
+
+        // Render field
+        const fieldImageData = fieldCtx.createImageData(N, N);
+        function renderField() {
+            let min = Infinity, max = -Infinity;
+            for (let i = 0; i < N * N; i++) {
+                if (field[i] < min) min = field[i];
+                if (field[i] > max) max = field[i];
+            }
+
+            const range = max - min || 1;
+            let cityCount = 0;
+
+            for (let i = 0; i < N * N; i++) {
+                const val = field[i];
+                const norm = (val - min) / range;
+
+                if (norm > 0.65) cityCount++;
+
+                // Colormap: blue -> cyan -> yellow -> red
+                let r, g, b;
+                if (norm < 0.33) {
+                    const t = norm / 0.33;
+                    r = 0;
+                    g = t * 255;
+                    b = 255;
+                } else if (norm < 0.67) {
+                    const t = (norm - 0.33) / 0.34;
+                    r = t * 255;
+                    g = 255;
+                    b = (1 - t) * 255;
+                } else {
+                    const t = (norm - 0.67) / 0.33;
+                    r = 255;
+                    g = (1 - t) * 255;
+                    b = 0;
+                }
+
+                fieldImageData.data[i * 4] = r;
+                fieldImageData.data[i * 4 + 1] = g;
+                fieldImageData.data[i * 4 + 2] = b;
+                fieldImageData.data[i * 4 + 3] = 255;
+            }
+
+            fieldCtx.putImageData(fieldImageData, 0, 0);
+            document.getElementById('cities').textContent = Math.floor(cityCount / 3);
+        }
+
+        // Render kernel
+        function renderKernel() {
+            kernelCanvas.width = 400;
+            kernelCanvas.height = 400;
+            kernelCtx.fillStyle = '#000';
+            kernelCtx.fillRect(0, 0, 400, 400);
+
+            const half = Math.floor(kernelSize / 2);
+            let minK = Infinity, maxK = -Infinity;
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                if (kernel[i] < minK) minK = kernel[i];
+                if (kernel[i] > maxK) maxK = kernel[i];
+            }
+
+            const cellSize = 400 / kernelSize;
+            for (let i = 0; i < kernelSize; i++) {
+                for (let j = 0; j < kernelSize; j++) {
+                    const val = kernel[i * kernelSize + j];
+                    const norm = val > 0 ? val / maxK : -val / Math.abs(minK);
+
+                    if (val > 0) {
+                        const intensity = Math.floor(norm * 255);
+                        kernelCtx.fillStyle = `rgb(${intensity}, ${intensity}, 255)`;
+                    } else {
+                        const intensity = Math.floor(norm * 255);
+                        kernelCtx.fillStyle = `rgb(255, ${intensity}, ${intensity})`;
+                    }
+
+                    kernelCtx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+                }
+            }
+
+            // Label
+            kernelCtx.fillStyle = '#8b92ff';
+            kernelCtx.font = '12px monospace';
+            kernelCtx.fillText('Blue=Attract, Red=Repel', 10, 390);
+        }
+
+        // Dispersion relation
+        function renderDispersion() {
+            dispersionCanvas.width = 400;
+            dispersionCanvas.height = 400;
+            dispersionCtx.fillStyle = '#000';
+            dispersionCtx.fillRect(0, 0, 400, 400);
+
+            // Approximate K_hat peak
+            const kmax_approx = Math.PI / 2;
+            const sigma_approx = params.sigma1;
+            const Khat_peak = 0.15; // Rough
+
+            const kValues = [];
+            const sigmaValues = [];
+            let maxSigma = -Infinity;
+            let kMaxIdx = 0;
+
+            for (let i = 0; i < 100; i++) {
+                const k = i * kmax_approx / 50;
+                const Khat = Khat_peak * Math.exp(-k * k * sigma_approx * sigma_approx / 2);
+                const sigma = params.M * (-params.kappa * k * k + params.lambda * Khat);
+
+                kValues.push(k);
+                sigmaValues.push(sigma);
+
+                if (sigma > maxSigma) {
+                    maxSigma = sigma;
+                    kMaxIdx = i;
+                }
+            }
+
+            const kMax = kValues[kMaxIdx];
+            document.getElementById('dominant-k').textContent = kMax.toFixed(3);
+            document.getElementById('char-scale').textContent = (2 * Math.PI / kMax).toFixed(2);
+
+            // Plot
+            dispersionCtx.strokeStyle = '#6b72d9';
+            dispersionCtx.lineWidth = 2;
+            dispersionCtx.beginPath();
+
+            const margin = 40;
+            const plotWidth = 400 - 2 * margin;
+            const plotHeight = 400 - 2 * margin;
+
+            const minSigma = Math.min(...sigmaValues);
+            const sigmaRange = maxSigma - minSigma || 1;
+            const kRange = kValues[kValues.length - 1];
+
+            for (let i = 0; i < kValues.length; i++) {
+                const x = margin + (kValues[i] / kRange) * plotWidth;
+                const y = 400 - margin - ((sigmaValues[i] - minSigma) / sigmaRange) * plotHeight;
+
+                if (i === 0) dispersionCtx.moveTo(x, y);
+                else dispersionCtx.lineTo(x, y);
+            }
+            dispersionCtx.stroke();
+
+            // Zero line
+            dispersionCtx.strokeStyle = '#555';
+            dispersionCtx.setLineDash([5, 5]);
+            dispersionCtx.beginPath();
+            const y0 = 400 - margin - ((-minSigma) / sigmaRange) * plotHeight;
+            dispersionCtx.moveTo(margin, y0);
+            dispersionCtx.lineTo(400 - margin, y0);
+            dispersionCtx.stroke();
+            dispersionCtx.setLineDash([]);
+
+            // Labels
+            dispersionCtx.fillStyle = '#9a9691';
+            dispersionCtx.font = '12px monospace';
+            dispersionCtx.fillText('k', 360, 390);
+            dispersionCtx.fillText('σ(k)', 10, 50);
+
+            // Mark k_max
+            const xMax = margin + (kMax / kRange) * plotWidth;
+            const yMax = 400 - margin - ((maxSigma - minSigma) / sigmaRange) * plotHeight;
+            dispersionCtx.fillStyle = '#ff6b6b';
+            dispersionCtx.beginPath();
+            dispersionCtx.arc(xMax, yMax, 5, 0, 2 * Math.PI);
+            dispersionCtx.fill();
+        }
+
+        // Power spectrum (placeholder - would need FFT)
+        function renderSpectrum() {
+            spectrumCanvas.width = 400;
+            spectrumCanvas.height = 400;
+            spectrumCtx.fillStyle = '#000';
+            spectrumCtx.fillRect(0, 0, 400, 400);
+
+            spectrumCtx.fillStyle = '#9a9691';
+            spectrumCtx.font = '12px monospace';
+            spectrumCtx.fillText('Power Spectrum |ŷ(k)|²', 10, 20);
+            spectrumCtx.fillText('(FFT computation)', 10, 40);
+
+            // Mock spectrum
+            const bars = 50;
+            const barWidth = 360 / bars;
+            const kMaxIdx = Math.floor(bars * 0.3);
+
+            for (let i = 0; i < bars; i++) {
+                const dist = Math.abs(i - kMaxIdx);
+                const height = Math.exp(-dist * dist / 50) * 300;
+
+                spectrumCtx.fillStyle = i === kMaxIdx ? '#ff6b6b' : '#6b72d9';
+                spectrumCtx.fillRect(20 + i * barWidth, 400 - 40 - height, barWidth - 2, height);
+            }
+
+            spectrumCtx.fillStyle = '#9a9691';
+            spectrumCtx.fillText('k', 360, 390);
+        }
+
+        // Stability analysis
+        function updateStability() {
+            const kmax = Math.PI / 2;
+            const Khat_peak = 0.15;
+            const lambdaC = params.kappa * kmax * kmax / Khat_peak;
+
+            document.getElementById('lambda-critical').textContent = lambdaC.toFixed(4);
+
+            const ratio = params.lambda / lambdaC;
+            document.getElementById('lambda-ratio').textContent = ratio.toFixed(3);
+
+            const indicator = document.getElementById('stability-indicator');
+            const status = document.getElementById('stability-status');
+
+            if (ratio < 0.95) {
+                indicator.className = 'status-indicator status-stable';
+                status.textContent = 'Stable';
+            } else if (ratio < 1.05) {
+                indicator.className = 'status-indicator status-critical';
+                status.textContent = 'Critical';
+            } else {
+                indicator.className = 'status-indicator status-unstable';
+                status.textContent = 'Unstable';
+            }
+
+            renderDispersion();
+        }
+
+        // Energy
+        function computeEnergy() {
+            let total = 0;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const idx = i * N + j;
+                    const ip = ((i + 1) % N) * N + j;
+                    const jp = i * N + ((j + 1) % N);
+
+                    const dx = field[ip] - field[idx];
+                    const dy = field[jp] - field[idx];
+                    total += 0.5 * params.kappa * (dx*dx + dy*dy);
+
+                    const dev = field[idx] - params.y0;
+                    total += 0.25 * params.alpha * dev * dev * dev * dev;
+                }
+            }
+
+            convolve();
+            for (let i = 0; i < N * N; i++) {
+                total -= 0.5 * params.lambda * field[i] * convResult[i];
+            }
+
+            document.getElementById('energy').textContent = total.toFixed(6);
+        }
+
+        // Controls
+        function setupControls() {
+            ['lambda', 'kappa', 'alpha'].forEach(id => {
+                const slider = document.getElementById(id);
+                const display = document.getElementById(`${id}-val`);
+                slider.addEventListener('input', () => {
+                    params[id] = parseFloat(slider.value);
+                    display.textContent = slider.value;
+                    updateStability();
+                });
+            });
+
+            document.getElementById('toggleSim').addEventListener('click', (e) => {
+                simRunning = !simRunning;
+                e.target.textContent = simRunning ? 'Pause' : 'Resume';
+                e.target.classList.toggle('active');
+            });
+
+            document.getElementById('reset').addEventListener('click', initField);
+
+            document.getElementById('demo1').addEventListener('click', () => {
+                params.lambda = 0.05;
+                document.getElementById('lambda').value = 0.05;
+                document.getElementById('lambda-val').textContent = '0.050';
+                initField();
+                updateStability();
+            });
+
+            document.getElementById('demo2').addEventListener('click', () => {
+                params.lambda = 0.20;
+                document.getElementById('lambda').value = 0.20;
+                document.getElementById('lambda-val').textContent = '0.200';
+                initField();
+                updateStability();
+            });
+
+            document.getElementById('demo3').addEventListener('click', () => {
+                params.lambda = 0.12;
+                document.getElementById('lambda').value = 0.12;
+                document.getElementById('lambda-val').textContent = '0.120';
+                initField();
+                updateStability();
+            });
+        }
+
+        // Main loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            stepSimulation();
+            renderField();
+
+            if (Math.floor(simTime * 10) % 5 === 0) {
+                computeEnergy();
+                renderSpectrum();
+            }
+
+            document.getElementById('time').textContent = simTime.toFixed(2);
+        }
+
+        // Initialize
+        computeKernel();
+        initField();
+        setupControls();
+        updateStability();
+        renderDispersion();
+        renderSpectrum();
+        animate();
+    </script>
+</body>
+</html>

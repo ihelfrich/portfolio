@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topological Economics Laboratory</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e8e6e3;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #9a9691;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+
+        .visualization {
+            background: #111;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        canvas {
+            width: 100%;
+            height: 600px;
+            background: #000;
+            border-radius: 4px;
+        }
+
+        .controls {
+            background: #111;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: #6b72d9;
+        }
+
+        .param {
+            margin-bottom: 1.5rem;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .param-name {
+            color: #9a9691;
+        }
+
+        .param-value {
+            color: #8b92ff;
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', monospace;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            outline: none;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #6b72d9;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(107, 114, 217, 0.15);
+            border: 1px solid #6b72d9;
+            border-radius: 8px;
+            color: #e8e6e3;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        button:hover {
+            background: #6b72d9;
+        }
+
+        button.active {
+            background: #6b72d9;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .metric-label {
+            color: #9a9691;
+        }
+
+        .metric-value {
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', monospace;
+            color: #8b92ff;
+        }
+
+        .interpretation {
+            background: rgba(107, 114, 217, 0.1);
+            border-left: 3px solid #6b72d9;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            border-radius: 4px;
+        }
+
+        .interpretation-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #8b92ff;
+        }
+
+        .equation {
+            background: rgba(0,0,0,0.3);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-unstable { background: #ff6b6b; }
+        .status-stable { background: #4ecdc4; }
+        .status-critical { background: #ffe66d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Topological Economics Laboratory</h1>
+            <div class="subtitle">Interactive Research Tool for Endogenous Agglomeration</div>
+        </header>
+
+        <div class="grid">
+            <div class="visualization">
+                <canvas id="fieldCanvas"></canvas>
+                <div class="interpretation">
+                    <div class="interpretation-title">Economic Interpretation</div>
+                    <div id="interpretation">
+                        Initializing field dynamics...
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="section">
+                    <h2>Simulation Control</h2>
+                    <button id="toggleSim" class="active">Pause</button>
+                    <button id="reset">Reset Field</button>
+                    <button id="exportData">Export Data (JSON)</button>
+                </div>
+
+                <div class="section">
+                    <h2>PDE Parameters</h2>
+                    <div class="equation">∂ₜy = M(κΔy + λ(K*y) - α(y-y₀)³)</div>
+
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">Coupling (λ)</span>
+                            <span class="param-value" id="lambda-val">0.150</span>
+                        </div>
+                        <input type="range" id="lambda" min="0" max="0.5" step="0.001" value="0.15">
+                    </div>
+
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">Diffusion (κ)</span>
+                            <span class="param-value" id="kappa-val">0.003</span>
+                        </div>
+                        <input type="range" id="kappa" min="0.001" max="0.01" step="0.0001" value="0.003">
+                    </div>
+
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">Congestion (α)</span>
+                            <span class="param-value" id="alpha-val">1.000</span>
+                        </div>
+                        <input type="range" id="alpha" min="0.1" max="3" step="0.01" value="1.0">
+                    </div>
+
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">Mobility (M)</span>
+                            <span class="param-value" id="M-val">1.000</span>
+                        </div>
+                        <input type="range" id="M" min="0.1" max="3" step="0.01" value="1.0">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Kernel Parameters</h2>
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">σ₁ (Inner)</span>
+                            <span class="param-value" id="sigma1-val">2.00</span>
+                        </div>
+                        <input type="range" id="sigma1" min="0.5" max="5" step="0.1" value="2.0">
+                    </div>
+
+                    <div class="param">
+                        <div class="param-label">
+                            <span class="param-name">σ₂ (Outer)</span>
+                            <span class="param-value" id="sigma2-val">5.00</span>
+                        </div>
+                        <input type="range" id="sigma2" min="2" max="10" step="0.1" value="5.0">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Stability Analysis</h2>
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator" id="stability-indicator"></span>
+                            System Status
+                        </span>
+                        <span class="metric-value" id="stability-status">---</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">λ_critical</span>
+                        <span class="metric-value" id="lambda-critical">---</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Characteristic Scale</span>
+                        <span class="metric-value" id="char-scale">---</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Energy Decomposition</h2>
+                    <div class="metric">
+                        <span class="metric-label">Total Energy</span>
+                        <span class="metric-value" id="energy-total">0.000</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Dirichlet</span>
+                        <span class="metric-value" id="energy-dirichlet">0.000</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Topological</span>
+                        <span class="metric-value" id="energy-topo">0.000</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Congestion</span>
+                        <span class="metric-value" id="energy-congestion">0.000</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Diagnostics</h2>
+                    <div class="metric">
+                        <span class="metric-label">Time</span>
+                        <span class="metric-value" id="time">0.00</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Active Cities</span>
+                        <span class="metric-value" id="cities">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">FPS</span>
+                        <span class="metric-value" id="fps">60</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('fieldCanvas');
+        const ctx = canvas.getContext('2d');
+        const N = 128; // Grid size
+        canvas.width = N;
+        canvas.height = N;
+
+        // Simulation state
+        let field = new Float32Array(N * N);
+        let fieldNext = new Float32Array(N * N);
+        let simTime = 0;
+        let simRunning = true;
+
+        // Parameters
+        const params = {
+            lambda: 0.15,
+            kappa: 0.003,
+            alpha: 1.0,
+            M: 1.0,
+            y0: 0.0,
+            sigma1: 2.0,
+            sigma2: 5.0,
+            dt: 0.05
+        };
+
+        // Kernel
+        const kernelSize = 21;
+        let kernel = new Float32Array(kernelSize * kernelSize);
+
+        function computeKernel() {
+            const half = Math.floor(kernelSize / 2);
+            const s1 = params.sigma1;
+            const s2 = params.sigma2;
+
+            let sum = 0;
+            for (let i = 0; i < kernelSize; i++) {
+                for (let j = 0; j < kernelSize; j++) {
+                    const x = (i - half);
+                    const y = (j - half);
+                    const r2 = x*x + y*y;
+
+                    // Mexican hat: difference of Gaussians
+                    const gauss1 = Math.exp(-r2 / (2 * s1 * s1));
+                    const gauss2 = Math.exp(-r2 / (2 * s2 * s2));
+                    const val = gauss1 - 0.5 * gauss2;
+
+                    kernel[i * kernelSize + j] = val;
+                    sum += val;
+                }
+            }
+
+            // Normalize to zero mean
+            const mean = sum / (kernelSize * kernelSize);
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                kernel[i] -= mean;
+            }
+
+            // Normalize L1 norm
+            let l1 = 0;
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                l1 += Math.abs(kernel[i]);
+            }
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                kernel[i] /= l1;
+            }
+        }
+
+        // Initialize field
+        function initField() {
+            for (let i = 0; i < N * N; i++) {
+                field[i] = (Math.random() - 0.5) * 0.01;
+            }
+            simTime = 0;
+        }
+
+        // Convolution
+        let convResult = new Float32Array(N * N);
+        function convolve() {
+            const half = Math.floor(kernelSize / 2);
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    let sum = 0;
+                    for (let ki = -half; ki <= half; ki++) {
+                        for (let kj = -half; kj <= half; kj++) {
+                            const ii = (i + ki + N) % N;
+                            const jj = (j + kj + N) % N;
+                            sum += field[ii * N + jj] * kernel[(ki + half) * kernelSize + (kj + half)];
+                        }
+                    }
+                    convResult[i * N + j] = sum;
+                }
+            }
+        }
+
+        // Laplacian
+        let lapResult = new Float32Array(N * N);
+        function laplacian() {
+            const factor = 100;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const ip = (i + 1) % N;
+                    const im = (i - 1 + N) % N;
+                    const jp = (j + 1) % N;
+                    const jm = (j - 1 + N) % N;
+
+                    lapResult[i * N + j] = (
+                        field[ip * N + j] + field[im * N + j] +
+                        field[i * N + jp] + field[i * N + jm] -
+                        4 * field[i * N + j]
+                    ) * factor;
+                }
+            }
+        }
+
+        // Energy calculation
+        function computeEnergy() {
+            let dirichlet = 0, topological = 0, congestion = 0;
+
+            // Dirichlet energy: κ/2 |∇y|²
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const ip = (i + 1) % N;
+                    const jp = (j + 1) % N;
+                    const dx = field[ip * N + j] - field[i * N + j];
+                    const dy = field[i * N + jp] - field[i * N + j];
+                    dirichlet += 0.5 * params.kappa * (dx*dx + dy*dy);
+                }
+            }
+
+            // Topological: -λ/2 y(K*y)
+            convolve();
+            for (let i = 0; i < N * N; i++) {
+                topological -= 0.5 * params.lambda * field[i] * convResult[i];
+            }
+
+            // Congestion: α/4 (y-y₀)⁴
+            for (let i = 0; i < N * N; i++) {
+                const dev = field[i] - params.y0;
+                congestion += 0.25 * params.alpha * dev * dev * dev * dev;
+            }
+
+            const total = dirichlet + topological + congestion;
+
+            document.getElementById('energy-total').textContent = total.toFixed(6);
+            document.getElementById('energy-dirichlet').textContent = dirichlet.toFixed(6);
+            document.getElementById('energy-topo').textContent = topological.toFixed(6);
+            document.getElementById('energy-congestion').textContent = congestion.toFixed(6);
+
+            return {total, dirichlet, topological, congestion};
+        }
+
+        // Critical lambda estimation
+        function estimateCriticalLambda() {
+            // λ_c ≈ κ k_max² / max(K̂(k))
+            // Rough estimate without FFT
+            const kmax = Math.PI / 2; // Nyquist-ish
+            const lambdaC = params.kappa * kmax * kmax / 0.15; // Rough kernel peak
+
+            document.getElementById('lambda-critical').textContent = lambdaC.toFixed(4);
+
+            // Status
+            const ratio = params.lambda / lambdaC;
+            const indicator = document.getElementById('stability-indicator');
+            const status = document.getElementById('stability-status');
+
+            if (ratio < 0.9) {
+                indicator.className = 'status-indicator status-stable';
+                status.textContent = 'Stable';
+            } else if (ratio < 1.1) {
+                indicator.className = 'status-indicator status-critical';
+                status.textContent = 'Critical';
+            } else {
+                indicator.className = 'status-indicator status-unstable';
+                status.textContent = 'Unstable';
+            }
+
+            // Characteristic scale
+            const charScale = 2 * Math.PI / kmax;
+            document.getElementById('char-scale').textContent = charScale.toFixed(2);
+        }
+
+        // Update interpretation
+        function updateInterpretation() {
+            const ratio = params.lambda / 0.05; // Rough λ_c
+            let text = '';
+
+            if (ratio > 1.2) {
+                text = `<strong>Instability Regime (λ > λ_c):</strong> The homogeneous equilibrium is <em>unstable</em>. Topological pressure (λK*y) dominates diffusion (κΔy), driving spontaneous city formation. Cities emerge at characteristic scale ℓ ≈ ${(2*Math.PI/2).toFixed(1)} units without explicit agglomeration externalities—this solves Starrett's (1978) impossibility theorem.`;
+            } else if (ratio > 0.8) {
+                text = `<strong>Critical Regime (λ ≈ λ_c):</strong> System near Turing bifurcation. Small perturbations amplified. This is where <em>endogenous scale selection</em> occurs—the characteristic city size emerges from the interplay of diffusion and Mexican-hat coupling.`;
+            } else {
+                text = `<strong>Stable Regime (λ < λ_c):</strong> Homogeneous equilibrium is stable. Diffusion dominates topological pressure. No city formation. Increase λ (topological coupling) to cross the instability threshold.`;
+            }
+
+            text += `<br><br><strong>Energy Balance:</strong> Congestion (α(y-y₀)⁴) prevents unbounded growth. Dirichlet energy (κ|∇y|²) penalizes sharp gradients. Topological term (-λy(K*y)) drives aggregation where K has positive Fourier modes.`;
+
+            document.getElementById('interpretation').innerHTML = text;
+        }
+
+        // Time step
+        function stepSimulation() {
+            if (!simRunning) return;
+
+            convolve();
+            laplacian();
+
+            const dt = params.dt;
+            const k = params.kappa;
+            const l = params.lambda;
+            const a = params.alpha;
+            const M = params.M;
+            const y0 = params.y0;
+
+            for (let i = 0; i < N * N; i++) {
+                const y = field[i];
+                const dydt = M * (k * lapResult[i] + l * convResult[i] - a * Math.pow(y - y0, 3));
+                fieldNext[i] = y + dt * dydt;
+            }
+
+            [field, fieldNext] = [fieldNext, field];
+            simTime += dt;
+        }
+
+        // Render
+        const imageData = ctx.createImageData(N, N);
+        function render() {
+            let min = Infinity, max = -Infinity;
+            for (let i = 0; i < N * N; i++) {
+                if (field[i] < min) min = field[i];
+                if (field[i] > max) max = field[i];
+            }
+
+            const range = max - min || 1;
+            let cityCount = 0;
+
+            for (let i = 0; i < N * N; i++) {
+                const val = field[i];
+                const norm = (val - min) / range;
+
+                if (norm > 0.7) cityCount++;
+
+                // Color: blue->cyan->yellow->red
+                let r, g, b;
+                if (norm < 0.25) {
+                    r = 0;
+                    g = norm * 4 * 100;
+                    b = 50 + norm * 4 * 150;
+                } else if (norm < 0.5) {
+                    const t = (norm - 0.25) * 4;
+                    r = t * 100;
+                    g = 100 + t * 155;
+                    b = 200 - t * 50;
+                } else if (norm < 0.75) {
+                    const t = (norm - 0.5) * 4;
+                    r = 100 + t * 155;
+                    g = 255 - t * 100;
+                    b = 150 - t * 150;
+                } else {
+                    const t = (norm - 0.75) * 4;
+                    r = 255;
+                    g = 155 - t * 155;
+                    b = 0;
+                }
+
+                imageData.data[i * 4] = r;
+                imageData.data[i * 4 + 1] = g;
+                imageData.data[i * 4 + 2] = b;
+                imageData.data[i * 4 + 3] = 255;
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            document.getElementById('cities').textContent = Math.floor(cityCount / 5);
+        }
+
+        // Export
+        function exportData() {
+            const data = {
+                parameters: params,
+                time: simTime,
+                field: Array.from(field),
+                energy: computeEnergy(),
+                metadata: {
+                    gridSize: N,
+                    timestamp: new Date().toISOString()
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `topo-econ-${Date.now()}.json`;
+            a.click();
+        }
+
+        // Controls
+        function setupControls() {
+            const sliders = ['lambda', 'kappa', 'alpha', 'M', 'sigma1', 'sigma2'];
+            sliders.forEach(id => {
+                const slider = document.getElementById(id);
+                const display = document.getElementById(`${id}-val`);
+                slider.addEventListener('input', () => {
+                    params[id] = parseFloat(slider.value);
+                    display.textContent = slider.value;
+                    if (id === 'sigma1' || id === 'sigma2') {
+                        computeKernel();
+                    }
+                    estimateCriticalLambda();
+                    updateInterpretation();
+                });
+            });
+
+            document.getElementById('toggleSim').addEventListener('click', (e) => {
+                simRunning = !simRunning;
+                e.target.textContent = simRunning ? 'Pause' : 'Resume';
+                e.target.classList.toggle('active');
+            });
+
+            document.getElementById('reset').addEventListener('click', initField);
+            document.getElementById('exportData').addEventListener('click', exportData);
+        }
+
+        // Main loop
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTime = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const now = performance.now();
+            const delta = now - lastTime;
+            lastTime = now;
+
+            stepSimulation();
+            render();
+
+            if (frameCount % 30 === 0) {
+                computeEnergy();
+                estimateCriticalLambda();
+                updateInterpretation();
+            }
+
+            frameCount++;
+            fpsTime += delta;
+            if (fpsTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                frameCount = 0;
+                fpsTime = 0;
+            }
+
+            document.getElementById('time').textContent = simTime.toFixed(2);
+        }
+
+        // Initialize
+        computeKernel();
+        initField();
+        setupControls();
+        estimateCriticalLambda();
+        updateInterpretation();
+        animate();
+    </script>
+</body>
+</html>

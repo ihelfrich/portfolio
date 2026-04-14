@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Formation on Earth | Topological Economics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #e8e6e3;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #6b72d9;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+            mix-blend-mode: difference;
+        }
+
+        #cursor.hover {
+            transform: scale(2);
+            background: rgba(107, 114, 217, 0.3);
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 200;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #9a9691;
+            letter-spacing: 0.05em;
+        }
+
+        .controls {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 320px;
+            background: rgba(10, 10, 10, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            pointer-events: all;
+        }
+
+        .control-section {
+            margin-bottom: 2rem;
+        }
+
+        .control-section h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: #6b72d9;
+        }
+
+        .param-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #9a9691;
+        }
+
+        .param-value {
+            color: #8b92ff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            outline: none;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #6b72d9;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(107, 114, 217, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #8b92ff;
+            transform: scale(1.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(107, 114, 217, 0.15);
+            border: 1px solid #6b72d9;
+            border-radius: 12px;
+            color: #e8e6e3;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        button:hover {
+            background: #6b72d9;
+            box-shadow: 0 0 30px rgba(107, 114, 217, 0.4);
+            transform: translateY(-2px);
+        }
+
+        button.active {
+            background: #6b72d9;
+        }
+
+        .stats {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            display: flex;
+            gap: 2rem;
+            pointer-events: none;
+        }
+
+        .stat {
+            text-align: left;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 200;
+            color: #8b92ff;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(107, 114, 217, 0.5);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #9a9691;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .instructions {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 0.75rem;
+            color: #9a9691;
+            text-align: right;
+            pointer-events: none;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1rem;
+            color: #9a9691;
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor"></div>
+    <div id="loading" class="loading">Initializing Earth Simulation...</div>
+
+    <div class="ui-overlay">
+        <div class="title">Endogenous City Formation</div>
+        <div class="subtitle">Topological Field Theory on Earth</div>
+    </div>
+
+    <div class="controls">
+        <div class="control-section">
+            <h3>Field Dynamics</h3>
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Coupling (λ)</span>
+                    <span class="param-value" id="lambda-val">0.180</span>
+                </div>
+                <input type="range" id="lambda" min="0" max="0.4" step="0.001" value="0.18">
+            </div>
+            <div class="param-group">
+                <div class="param-label">
+                    <span>Diffusion (κ)</span>
+                    <span class="param-value" id="kappa-val">0.002</span>
+                </div>
+                <input type="range" id="kappa" min="0" max="0.01" step="0.0001" value="0.002">
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h3>Visualization</h3>
+            <button id="toggleRotation" class="active">Auto-Rotate</button>
+            <button id="toggleCities">Show Cities</button>
+            <button id="toggleField" class="active">Show Field</button>
+            <button id="reset">Reset Simulation</button>
+        </div>
+
+        <div class="control-section">
+            <h3>View Presets</h3>
+            <button id="viewGlobal">Global View</button>
+            <button id="viewUSA">North America</button>
+            <button id="viewEurope">Europe</button>
+            <button id="viewAsia">Asia</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="time">0.0</div>
+            <div class="stat-label">Time</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="cities">0</div>
+            <div class="stat-label">Cities Formed</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="fps">60</div>
+            <div class="stat-label">FPS</div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        Drag to rotate • Scroll to zoom • Click to perturb field
+    </div>
+
+    <div id="container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Custom cursor
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.querySelectorAll('button, input').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        });
+
+        // Three.js setup
+        const container = document.getElementById('container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        camera.position.z = 3;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0x6b72d9, 1, 100);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        const pointLight2 = new THREE.PointLight(0x8b92ff, 0.5, 100);
+        pointLight2.position.set(-5, -5, 5);
+        scene.add(pointLight2);
+
+        // Earth sphere
+        const sphereGeometry = new THREE.SphereGeometry(1, 128, 128);
+
+        // Create field texture
+        const fieldSize = 256;
+        const fieldData = new Uint8Array(fieldSize * fieldSize * 4);
+        const fieldTexture = new THREE.DataTexture(fieldData, fieldSize, fieldSize, THREE.RGBAFormat);
+        fieldTexture.needsUpdate = true;
+
+        const sphereMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                fieldTexture: { value: fieldTexture },
+                time: { value: 0 },
+                showField: { value: 1.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+
+                void main() {
+                    vUv = uv;
+                    vNormal = normalize(normalMatrix * normal);
+                    vPosition = position;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D fieldTexture;
+                uniform float time;
+                uniform float showField;
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+
+                void main() {
+                    // Base earth color (dark blue-gray)
+                    vec3 baseColor = vec3(0.05, 0.07, 0.12);
+
+                    // Field value
+                    vec4 fieldValue = texture2D(fieldTexture, vUv);
+                    float intensity = fieldValue.r;
+
+                    // Glow based on field intensity
+                    vec3 glowColor = vec3(0.42, 0.45, 0.85); // Purple-blue
+                    vec3 hotColor = vec3(0.85, 0.42, 0.65);  // Pink
+
+                    vec3 fieldColor = mix(glowColor, hotColor, intensity);
+
+                    // Fresnel effect
+                    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+
+                    // Combine
+                    vec3 color = baseColor + fieldColor * intensity * showField * 0.8;
+                    color += fresnel * glowColor * 0.3;
+
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `
+        });
+
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+
+        // Field simulation state
+        const N = fieldSize;
+        let field = new Float32Array(N * N);
+        let fieldNext = new Float32Array(N * N);
+        let kernel = new Float32Array(21 * 21);
+
+        let params = {
+            lambda: 0.18,
+            kappa: 0.002,
+            alpha: 1.0,
+            sigma1: 2.0,
+            sigma2: 5.0
+        };
+
+        let simTime = 0;
+        let dt = 0.05;
+        let autoRotate = true;
+        let showCities = false;
+        let showField = true;
+
+        // Initialize field with noise
+        function initField() {
+            for (let i = 0; i < N * N; i++) {
+                field[i] = (Math.random() - 0.5) * 0.02;
+            }
+            simTime = 0;
+        }
+
+        // Mexican hat kernel
+        function computeKernel() {
+            const kernelSize = 21;
+            const half = Math.floor(kernelSize / 2);
+            const s1 = params.sigma1;
+            const s2 = params.sigma2;
+            let sum = 0;
+
+            for (let i = 0; i < kernelSize; i++) {
+                for (let j = 0; j < kernelSize; j++) {
+                    const x = (i - half) * 0.5;
+                    const y = (j - half) * 0.5;
+                    const r2 = x*x + y*y;
+                    const val = Math.exp(-r2/(2*s1*s1)) - 0.5*Math.exp(-r2/(2*s2*s2));
+                    kernel[i * kernelSize + j] = val;
+                    sum += val;
+                }
+            }
+
+            // Normalize
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                kernel[i] /= Math.abs(sum);
+            }
+        }
+
+        // Spherical convolution (simplified)
+        let convResult = new Float32Array(N * N);
+        function sphericalConvolve() {
+            const kernelSize = 21;
+            const half = Math.floor(kernelSize / 2);
+
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    let sum = 0;
+                    for (let ki = -half; ki <= half; ki++) {
+                        for (let kj = -half; kj <= half; kj++) {
+                            const ii = (i + ki + N) % N;
+                            const jj = (j + kj + N) % N;
+                            const kernelIdx = (ki + half) * kernelSize + (kj + half);
+                            sum += field[ii * N + jj] * kernel[kernelIdx];
+                        }
+                    }
+                    convResult[i * N + j] = sum;
+                }
+            }
+        }
+
+        // Laplacian on sphere
+        let lapResult = new Float32Array(N * N);
+        function sphericalLaplacian() {
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const ip = (i + 1) % N;
+                    const im = (i - 1 + N) % N;
+                    const jp = (j + 1) % N;
+                    const jm = (j - 1 + N) % N;
+
+                    const val = (
+                        field[ip * N + j] + field[im * N + j] +
+                        field[i * N + jp] + field[i * N + jm] -
+                        4 * field[i * N + j]
+                    );
+
+                    lapResult[i * N + j] = val * 100;
+                }
+            }
+        }
+
+        // Time step
+        function stepSimulation() {
+            sphericalConvolve();
+            sphericalLaplacian();
+
+            for (let i = 0; i < N * N; i++) {
+                const y = field[i];
+                const dydt = (
+                    params.kappa * lapResult[i] +
+                    params.lambda * convResult[i] -
+                    params.alpha * Math.pow(y, 3)
+                );
+                fieldNext[i] = y + dt * dydt;
+            }
+
+            [field, fieldNext] = [fieldNext, field];
+            simTime += dt;
+        }
+
+        // Update texture
+        function updateFieldTexture() {
+            let minVal = Infinity;
+            let maxVal = -Infinity;
+            for (let i = 0; i < N * N; i++) {
+                minVal = Math.min(minVal, field[i]);
+                maxVal = Math.max(maxVal, field[i]);
+            }
+
+            const range = maxVal - minVal || 1;
+            let cityCount = 0;
+
+            for (let i = 0; i < N * N; i++) {
+                const val = field[i];
+                const normalized = Math.max(0, Math.min(1, (val - minVal) / range));
+
+                if (normalized > 0.7) cityCount++;
+
+                fieldData[i * 4] = Math.floor(normalized * 255);
+                fieldData[i * 4 + 1] = Math.floor(normalized * 200);
+                fieldData[i * 4 + 2] = Math.floor(normalized * 255);
+                fieldData[i * 4 + 3] = 255;
+            }
+
+            fieldTexture.needsUpdate = true;
+            document.getElementById('cities').textContent = Math.floor(cityCount / 10);
+        }
+
+        // Mouse interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        renderer.domElement.addEventListener('click', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(sphere);
+
+            if (intersects.length > 0) {
+                const uv = intersects[0].uv;
+                const i = Math.floor(uv.y * N);
+                const j = Math.floor(uv.x * N);
+
+                // Add perturbation
+                for (let di = -5; di <= 5; di++) {
+                    for (let dj = -5; dj <= 5; dj++) {
+                        const ii = (i + di + N) % N;
+                        const jj = (j + dj + N) % N;
+                        field[ii * N + jj] += 0.1 * Math.exp(-(di*di + dj*dj) / 10);
+                    }
+                }
+            }
+        });
+
+        // Camera controls (simplified)
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        renderer.domElement.addEventListener('mousedown', () => {
+            isDragging = true;
+        });
+
+        renderer.domElement.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                sphere.rotation.y += deltaX * 0.005;
+                sphere.rotation.x += deltaY * 0.005;
+
+                autoRotate = false;
+                document.getElementById('toggleRotation').classList.remove('active');
+            }
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            camera.position.z += e.deltaY * 0.001;
+            camera.position.z = Math.max(1.5, Math.min(5, camera.position.z));
+        });
+
+        // Controls
+        function updateParam(id, displayId) {
+            const slider = document.getElementById(id);
+            const display = document.getElementById(displayId);
+            slider.addEventListener('input', () => {
+                params[id] = parseFloat(slider.value);
+                display.textContent = slider.value.padStart(5, '0');
+                if (id.includes('sigma')) {
+                    computeKernel();
+                }
+            });
+        }
+
+        updateParam('lambda', 'lambda-val');
+        updateParam('kappa', 'kappa-val');
+
+        document.getElementById('toggleRotation').addEventListener('click', (e) => {
+            autoRotate = !autoRotate;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleCities').addEventListener('click', (e) => {
+            showCities = !showCities;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('toggleField').addEventListener('click', (e) => {
+            showField = !showField;
+            sphereMaterial.uniforms.showField.value = showField ? 1.0 : 0.0;
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('reset').addEventListener('click', () => {
+            initField();
+        });
+
+        // View presets
+        document.getElementById('viewGlobal').addEventListener('click', () => {
+            camera.position.set(0, 0, 3);
+            sphere.rotation.set(0, 0, 0);
+        });
+
+        document.getElementById('viewUSA').addEventListener('click', () => {
+            sphere.rotation.set(0.6, -1.7, 0);
+        });
+
+        document.getElementById('viewEurope').addEventListener('click', () => {
+            sphere.rotation.set(0.8, -0.3, 0);
+        });
+
+        document.getElementById('viewAsia').addEventListener('click', () => {
+            sphere.rotation.set(0.5, 1.5, 0);
+        });
+
+        // Animation loop
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTime = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const now = performance.now();
+            const delta = now - lastTime;
+            lastTime = now;
+
+            stepSimulation();
+            updateFieldTexture();
+
+            if (autoRotate) {
+                sphere.rotation.y += 0.002;
+            }
+
+            sphereMaterial.uniforms.time.value = simTime;
+
+            renderer.render(scene, camera);
+
+            frameCount++;
+            fpsTime += delta;
+            if (fpsTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                frameCount = 0;
+                fpsTime = 0;
+            }
+
+            document.getElementById('time').textContent = simTime.toFixed(1);
+        }
+
+        // Initialize and start
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        computeKernel();
+        initField();
+        document.getElementById('loading').style.display = 'none';
+        animate();
+    </script>
+</body>
+</html>

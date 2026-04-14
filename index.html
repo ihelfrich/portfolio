@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr. Ian Helfrich | Economics & GIS Expert</title>
+    <title>Dr. Ian Helfrich | Economist & Geospatial Researcher</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,20 +15,67 @@
         }
 
         :root {
-            --bg-dark: #1b1b1b;
+            --bg-dark: #0d0d0d;
+            --bg-card: #111111;
             --text-light: #c5c1b9;
-            --text-lighter: #dcdad5;
-            --accent: #575ECF;
-            --divider: rgba(255, 255, 255, 0.04);
+            --text-lighter: #e5e4e2;
+            --accent: #002366;
+            --accent-glow: #0040cc;
+            --cyan: #00ccff;
+            --violet: #8800ff;
+            --divider: rgba(255, 255, 255, 0.06);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'IBM Plex Mono', 'SF Mono', monospace;
             background: var(--bg-dark);
             color: var(--text-light);
             line-height: 1.6;
             font-size: 16px;
             overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* Particle canvas */
+        #particle-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+        .fade-up-1 { animation-delay: 0.1s; }
+        .fade-up-2 { animation-delay: 0.25s; }
+        .fade-up-3 { animation-delay: 0.4s; }
+        .fade-up-4 { animation-delay: 0.55s; }
+
+        /* Gradient text */
+        .text-gradient {
+            background: linear-gradient(135deg, var(--cyan) 0%, #0066ff 50%, var(--violet) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Math glow */
+        .math-glow {
+            text-shadow: 0 0 10px rgba(0, 64, 204, 0.4), 0 0 20px rgba(0, 64, 204, 0.2);
         }
 
         .container {
@@ -36,59 +86,100 @@
 
         /* Header */
         header {
-            padding: 3rem 0;
+            padding: 5rem 0 3rem;
             border-bottom: 1px solid var(--divider);
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: flex-start;
+            gap: 3rem;
+        }
+
+        .profile-photo {
+            flex-shrink: 0;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(0, 204, 255, 0.15);
+            box-shadow: 0 0 30px rgba(0, 64, 204, 0.15), 0 0 60px rgba(0, 64, 204, 0.06);
+            filter: grayscale(20%);
+        }
+
+        .header-text { flex: 1; }
+
+        .kicker {
+            display: inline-block;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            border: 1px solid var(--divider);
+            padding: 0.4rem 0.9rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
         }
 
         .badge {
             position: fixed;
             bottom: 24px;
             right: 24px;
-            background: rgba(27, 27, 27, 0.95);
+            background: rgba(13, 13, 13, 0.95);
             border: 1px solid var(--divider);
             padding: 0.75rem 1.5rem;
             border-radius: 24px;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
+            font-family: 'IBM Plex Mono', monospace;
             color: var(--text-light);
             backdrop-filter: blur(10px);
             z-index: 1000;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.05em;
         }
 
         .badge:hover {
-            color: var(--text-lighter);
-            border-color: var(--accent);
+            color: var(--cyan);
+            border-color: rgba(0, 204, 255, 0.3);
         }
 
         h1 {
+            font-family: 'Montserrat', sans-serif;
             font-size: 3.5rem;
-            font-weight: 200;
-            margin-bottom: 1rem;
+            font-weight: 300;
+            margin-bottom: 0.75rem;
             color: var(--text-lighter);
             letter-spacing: -0.02em;
+            line-height: 1.1;
         }
 
         .subtitle {
-            font-size: 1.25rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
             color: var(--text-light);
             font-weight: 300;
             margin-bottom: 2rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.8;
         }
 
         .credentials {
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.75rem;
             margin-top: 2rem;
         }
 
         .credential-badge {
-            background: rgba(87, 94, 207, 0.1);
-            border: 1px solid rgba(87, 94, 207, 0.3);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
+            background: rgba(0, 35, 102, 0.12);
+            border: 1px solid rgba(0, 35, 102, 0.35);
+            padding: 0.4rem 0.9rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
             color: var(--text-lighter);
+            letter-spacing: 0.03em;
         }
 
         /* Navigation */
@@ -319,19 +410,27 @@
         }
     </style>
 </head>
+<canvas id="particle-canvas"></canvas>
+
 <body>
     <div class="badge">Where Convergence Begins</div>
 
     <div class="container">
         <header>
-            <h1>Dr. Ian Helfrich</h1>
-            <p class="subtitle">Economist | GIS Specialist | Research Consultant</p>
-            <div class="credentials">
-                <span class="credential-badge">PhD Economics, Georgia Tech 2024</span>
-                <span class="credential-badge">MS Geographic Information Science 2022</span>
-                <span class="credential-badge">MS Economics 2019</span>
-                <span class="credential-badge">MA Economics, Indiana 2018</span>
-                <span class="credential-badge">MSc Econ & Policy, Barcelona 2015</span>
+            <div class="header-inner">
+                <img src="assets/ian-profile.png" alt="Dr. Ian Helfrich" class="profile-photo fade-up fade-up-1">
+                <div class="header-text">
+                    <div class="kicker fade-up fade-up-1">Economist · Geospatial Researcher · Research Consultant</div>
+                    <h1 class="fade-up fade-up-2">Dr. Ian <span class="text-gradient">Helfrich</span></h1>
+                    <p class="subtitle fade-up fade-up-3">PhD Economics, Georgia Tech &nbsp;·&nbsp; MS GIS &nbsp;·&nbsp; 5 Graduate Degrees</p>
+                    <div class="credentials fade-up fade-up-4">
+                        <span class="credential-badge">International Trade</span>
+                        <span class="credential-badge">Spatial Econometrics</span>
+                        <span class="credential-badge">PPML · Panel Data</span>
+                        <span class="credential-badge">Nightlights · Remote Sensing</span>
+                        <span class="credential-badge">ArcGIS Pro · Python · Stata · Julia</span>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -639,9 +738,93 @@
         </section>
 
         <footer>
-            <p>&copy; 2026 Dr. Ian Helfrich. All rights reserved.</p>
-            <p style="margin-top: 1rem; opacity: 0.6;">Economist | GIS Specialist | Research Consultant</p>
+            <p style="font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; letter-spacing: 0.05em;">&copy; 2026 Dr. Ian Helfrich</p>
+            <p style="margin-top: 0.5rem; opacity: 0.4; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;">Economist · GIS · Research Consultant</p>
         </footer>
     </div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let W, H, particles = [], animId;
+
+    const COLORS = [
+        [0, 102, 255],    // cobalt
+        [0, 204, 255],    // cyan
+        [136, 0, 255],    // violet
+        [0, 35, 102],     // deep cobalt
+    ];
+
+    function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+    }
+
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    function mkParticle() {
+        const c = COLORS[Math.floor(Math.random() * COLORS.length)];
+        return {
+            x: rand(0, W),
+            y: rand(0, H),
+            r: rand(0.4, 1.6),
+            vx: rand(-0.08, 0.08),
+            vy: rand(-0.06, 0.06),
+            alpha: rand(0.15, 0.55),
+            color: c,
+        };
+    }
+
+    function init() {
+        resize();
+        const count = Math.floor((W * H) / 7000);
+        particles = Array.from({ length: count }, mkParticle);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Draw connections
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 120) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(0, 64, 204, ${0.06 * (1 - dist / 120)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Draw particles
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha})`;
+            ctx.fill();
+
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < -10) p.x = W + 10;
+            if (p.x > W + 10) p.x = -10;
+            if (p.y < -10) p.y = H + 10;
+            if (p.y > H + 10) p.y = -10;
+        });
+
+        animId = requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', () => { cancelAnimationFrame(animId); init(); draw(); });
+    init();
+    draw();
+})();
+</script>
 </body>
 </html>

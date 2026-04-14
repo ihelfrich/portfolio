@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr. Ian Helfrich | Economics & GIS Expert</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #1b1b1b;
+            --text-light: #c5c1b9;
+            --text-lighter: #dcdad5;
+            --accent: #575ECF;
+            --divider: rgba(255, 255, 255, 0.04);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            font-size: 16px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--divider);
+        }
+
+        .badge {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(27, 27, 27, 0.95);
+            border: 1px solid var(--divider);
+            padding: 0.75rem 1.5rem;
+            border-radius: 24px;
+            font-size: 0.875rem;
+            color: var(--text-light);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .badge:hover {
+            color: var(--text-lighter);
+            border-color: var(--accent);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 200;
+            margin-bottom: 1rem;
+            color: var(--text-lighter);
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            font-weight: 300;
+            margin-bottom: 2rem;
+        }
+
+        .credentials {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .credential-badge {
+            background: rgba(87, 94, 207, 0.1);
+            border: 1px solid rgba(87, 94, 207, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            color: var(--text-lighter);
+        }
+
+        /* Navigation */
+        nav {
+            margin: 2rem 0;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--divider);
+        }
+
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            margin-right: 2rem;
+            font-weight: 400;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--text-lighter);
+        }
+
+        /* Sections */
+        section {
+            padding: 4rem 0;
+            border-bottom: 1px solid var(--divider);
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            color: var(--text-lighter);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            color: var(--text-lighter);
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .project-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--divider);
+            padding: 2rem;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .project-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(87, 94, 207, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .project-tag {
+            display: inline-block;
+            background: rgba(87, 94, 207, 0.15);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-lighter);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .service-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--divider);
+            padding: 2.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .service-card h3 {
+            margin-bottom: 1rem;
+        }
+
+        .price {
+            font-size: 2.5rem;
+            font-weight: 200;
+            color: var(--accent);
+            margin: 1rem 0;
+        }
+
+        .price-note {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .cta-button:hover {
+            background: #6b72d9;
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 200;
+            color: var(--accent);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Publications */
+        .publication {
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--divider);
+        }
+
+        .publication:last-child {
+            border-bottom: none;
+        }
+
+        .publication-title {
+            font-size: 1.1rem;
+            color: var(--text-lighter);
+            margin-bottom: 0.5rem;
+        }
+
+        .publication-meta {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 0;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .contact-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .contact-links a:hover {
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .project-grid,
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav a {
+                display: block;
+                margin: 0.5rem 0;
+            }
+
+            .badge {
+                bottom: 12px;
+                right: 12px;
+                font-size: 0.75rem;
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="badge">Where Convergence Begins</div>
+
+    <div class="container">
+        <header>
+            <h1>Dr. Ian Helfrich</h1>
+            <p class="subtitle">Economist | GIS Specialist | Research Consultant</p>
+            <div class="credentials">
+                <span class="credential-badge">PhD Economics, Georgia Tech 2024</span>
+                <span class="credential-badge">MS Geographic Information Science 2022</span>
+                <span class="credential-badge">MS Economics 2019</span>
+                <span class="credential-badge">MA Economics, Indiana 2018</span>
+                <span class="credential-badge">MSc Econ & Policy, Barcelona 2015</span>
+            </div>
+        </header>
+
+        <nav>
+            <a href="#about">About</a>
+            <a href="#research">Research</a>
+            <a href="#services">Services</a>
+            <a href="#publications">Publications</a>
+            <a href="#contact">Contact</a>
+        </nav>
+
+        <section id="about">
+            <h2>About</h2>
+            <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;">
+                A scholar-practitioner bridging rigorous academic economics and real-world application. Fifteen years of experience developing analytical frameworks, mentoring researchers, and guiding clients through complex quantitative challenges—from doctoral dissertations to policy analysis.
+            </p>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number">200+</span>
+                    <span class="stat-label">Clients Worldwide</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">1,150+</span>
+                    <span class="stat-label">Hours Tutored</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">5</span>
+                    <span class="stat-label">Graduate Degrees</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">10+</span>
+                    <span class="stat-label">Research Projects</span>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 3rem;">Expertise</h3>
+            <div class="project-grid">
+                <div class="project-card">
+                    <h3>Economics</h3>
+                    <p>International trade, applied microeconomics, spatial economics, network analysis, behavioral economics, labor economics</p>
+                </div>
+                <div class="project-card">
+                    <h3>Quantitative Methods</h3>
+                    <p>Econometrics, causal inference, spatial statistics, machine learning, structural estimation, topological data analysis</p>
+                </div>
+                <div class="project-card">
+                    <h3>GIS & Spatial Analysis</h3>
+                    <p>ArcGIS Pro, QGIS, PostGIS, remote sensing, geospatial modeling, network analysis, spatial econometrics</p>
+                </div>
+                <div class="project-card">
+                    <h3>Programming</h3>
+                    <p>Python, R, STATA, Julia, JavaScript, SQL, Git, reproducible research workflows</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="research">
+            <h2>Featured Research</h2>
+
+            <div class="project-grid">
+                <div class="project-card">
+                    <h3>Endogenous Agglomeration via Topological Field Theory</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="project-tag">Frontier Theory</span>
+                        <span class="project-tag">Persistent Homology</span>
+                        <span class="project-tag">PDE Solver</span>
+                        <span class="project-tag">Python</span>
+                    </div>
+                    <p><strong>The Core Innovation:</strong> Derives <em>Topological Pressure</em> Π<sub>topo</sub> from persistent homology as a variational force that generates endogenous city formation without explicit agglomeration externalities—solving Starrett's (1978) spatial impossibility theorem.</p>
+
+                    <p style="margin-top: 0.75rem;"><strong>Key Results:</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.8;">
+                        <li><strong>Topological Turing Instability:</strong> Homogeneous equilibrium destabilizes at λ > λ<sub>c</sub>, selecting characteristic city scale ℓ = 2π/k<sub>max</sub></li>
+                        <li><strong>Topological Gravity Equation:</strong> Migration flows v = χ∇(y + λK*y) exhibit nonlocal "tunneling" between distant hubs absent from standard models</li>
+                        <li><strong>Empirical Framework:</strong> Three testable predictions using BACI trade data, gravity residuals, and network resilience analysis</li>
+                    </ul>
+
+                    <p style="margin-top: 0.75rem;"><strong>Technical Implementation:</strong> Complete production codebase with FFT-based PDE solver, persistence diagram computation (gudhi/ripser), power spectrum analysis, and empirical testing pipeline. 860 LOC core dynamics.</p>
+                </div>
+
+                <div class="project-card">
+                    <h3>Climate Energy Externalities & Winter Storm Uri</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="project-tag">Spatial Econometrics</span>
+                        <span class="project-tag">Event Study</span>
+                        <span class="project-tag">GIS</span>
+                        <span class="project-tag">Co-authored</span>
+                    </div>
+                    <p><strong>Lead Author:</strong> David Park (high school student, Crean Lutheran) | <strong>PI & Advisor:</strong> Dr. Ian Helfrich</p>
+
+                    <p style="margin-top: 0.75rem;"><strong>Research Questions:</strong> Do renewable energy facilities create spatial externalities? What was the distributional impact of Winter Storm Uri (Feb 2021) on Texas communities?</p>
+
+                    <p style="margin-top: 0.75rem;"><strong>Methods & Results:</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.8;">
+                        <li><strong>Spatial Autocorrelation:</strong> Corrected k-NN Moran's I analysis reveals significant spatial clustering in renewable energy externalities</li>
+                        <li><strong>Winter Storm Uri Event Study:</strong> Causal identification of storm impact using difference-in-differences framework with panel fixed effects (T=5 years)</li>
+                        <li><strong>Energy Distributional Index (EDI):</strong> Novel metric combining capacity, generation, and demographic controls to measure energy inequality</li>
+                    </ul>
+
+                    <p style="margin-top: 0.75rem;"><strong>Data & Code:</strong> 60+ Python scripts processing Texas power plant data, NREL LCOE benchmarks, census demographics. Full reproducible pipeline with publication-quality figures (PNG + PDF).</p>
+                </div>
+
+                <div class="project-card">
+                    <h3>STATAverse: Econometrics Learning Platform</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="project-tag">Pedagogy</span>
+                        <span class="project-tag">STATA</span>
+                        <span class="project-tag">Graduate-Level</span>
+                        <span class="project-tag">GitHub Pages</span>
+                    </div>
+                    <p><strong>Vision:</strong> Bridge the gap between econometric theory and real-world practice through simulation-based, hands-on learning aligned with graduate business programs (MGTO 80430 equivalents).</p>
+
+                    <p style="margin-top: 0.75rem;"><strong>Content Modules:</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.8;">
+                        <li><strong>Code Library:</strong> 30+ production-ready scripts covering OLS diagnostics, panel methods (FE/RE), causal inference (DiD, RDD, IV/2SLS), count models (Poisson/NB), marginal effects</li>
+                        <li><strong>Zero-to-Hero Sequence:</strong> Econometric mindset → OLS intuition → limited outcomes → simulation-based learning with real datasets</li>
+                        <li><strong>Anti-Pattern Library:</strong> Learn from mistakes—common pitfalls and how to avoid them</li>
+                        <li><strong>Glossary:</strong> Endogeneity, heteroskedasticity, omitted variable bias, marginal effects—technical concepts explained clearly</li>
+                    </ul>
+
+                    <p style="margin-top: 0.75rem;"><strong>Deployment:</strong> Live on GitHub Pages. Modular architecture supports continuous expansion. All code tested and verified for reproducibility.</p>
+                </div>
+
+                <div class="project-card">
+                    <h3>Family Office Trust Funds & Hyperbolic Discounting</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="project-tag">NBER Collaboration</span>
+                        <span class="project-tag">RCT</span>
+                        <span class="project-tag">β-δ Model</span>
+                        <span class="project-tag">Structural Estimation</span>
+                    </div>
+                    <p><strong>Research Question:</strong> Can family office-style trust structures resolve the "credit card debt puzzle" for low-income populations?</p>
+
+                    <p style="margin-top: 0.75rem;"><strong>Theoretical Framework:</strong> Extends Laibson's β-δ hyperbolic discounting model to test whether commitment devices (trust fund structures) help low-income individuals overcome present bias.</p>
+
+                    <p style="margin-top: 0.75rem;"><strong>Empirical Design:</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.8;">
+                        <li><strong>Sample:</strong> 900+ participants across 5 treatment arms</li>
+                        <li><strong>Methods:</strong> Randomized controlled trial with structural estimation of discount parameters</li>
+                        <li><strong>Collaborators:</strong> Richard M. Berk (CPA, project partner), Sarah Holmes Berk (NBER), with potential advisors David Laibson (Harvard) and James Choi (Yale)</li>
+                    </ul>
+
+                    <p style="margin-top: 0.75rem;"><strong>Status:</strong> Active research project. NBER working paper target. High policy impact potential for poverty alleviation.</p>
+                </div>
+
+                <div class="project-card">
+                    <h3>Solar Infrastructure & Agricultural Land Values</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="project-tag">Real Options Theory</span>
+                        <span class="project-tag">ArcGIS Pro</span>
+                        <span class="project-tag">13,332 Facilities</span>
+                        <span class="project-tag">National Scale</span>
+                    </div>
+                    <p><strong>Research Design:</strong> Replication and extension of Taylor & Abashidze (2022) examining renewable energy infrastructure impacts on agricultural land values using real options framework.</p>
+
+                    <p style="margin-top: 0.75rem;"><strong>Data & Methods:</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.8;">
+                        <li><strong>Dataset:</strong> US Power Plants (2025) with 13,332 facilities + transmission infrastructure (50+ GeoJSON files)</li>
+                        <li><strong>GIS Processing:</strong> ArcGIS Pro + QGIS spatial analysis, PostGIS/PostgreSQL for scalable queries</li>
+                        <li><strong>Framework:</strong> Real options valuation of land use conversion + spatial hedonic models</li>
+                    </ul>
+
+                    <p style="margin-top: 0.75rem;"><strong>Potential Outputs:</strong> Multiple paper pipeline on optimal renewable zoning, land value capitalization, and infrastructure planning. Energy consulting applications.</p>
+                </div>
+
+                <div class="project-card">
+                    <h3>Trade Networks & Topological Gravity</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="project-tag">PhD Dissertation</span>
+                        <span class="project-tag">BACI Trade Data</span>
+                        <span class="project-tag">Network Mathematics</span>
+                        <span class="project-tag">Julia</span>
+                    </div>
+                    <p><strong>Dissertation Research (Georgia Tech, 2024):</strong> Advanced gravity models incorporating network topology and persistent homology to explain international trade and migration patterns.</p>
+
+                    <p style="margin-top: 0.75rem;"><strong>Key Contributions:</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.8;">
+                        <li><strong>Topological Gravity Equation:</strong> v = χ∇(y + λK*y) capturing "tunneling" flows between non-adjacent trading partners</li>
+                        <li><strong>Empirical Testing:</strong> Homological proximity explains gravity equation residuals beyond standard bilateral frictions</li>
+                        <li><strong>Data Processing:</strong> BACI HS02/HS92/HS96 trade data (1995-2020), 6.7GB of cleaned bilateral flows</li>
+                    </ul>
+
+                    <p style="margin-top: 0.75rem;"><strong>Technical Stack:</strong> Julia for high-performance computing, Python for persistent homology (gudhi), NetworkX for graph analysis. Complete computational pipeline for trade network analysis.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="services">
+            <h2>Services</h2>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <h3>1:1 Tutoring</h3>
+                    <p>Expert guidance in economics, econometrics, and quantitative methods for students from high school AP to PhD level.</p>
+                    <div class="price">$125<span style="font-size: 1rem; font-weight: 300;">/hour</span></div>
+                    <p class="price-note">Platform: Wyzant & Direct</p>
+                    <a href="https://www.wyzant.com/Tutors/Econ" class="cta-button" target="_blank">Book on Wyzant</a>
+                </div>
+
+                <div class="service-card">
+                    <h3>PhD Shadow Advising</h3>
+                    <p>Comprehensive support for doctoral students: research design, methodology, dissertation guidance, and publication strategy.</p>
+                    <div class="price">$200<span style="font-size: 1rem; font-weight: 300;">/hour</span></div>
+                    <p class="price-note">Retainer packages available</p>
+                    <a href="#contact" class="cta-button">Inquire</a>
+                </div>
+
+                <div class="service-card">
+                    <h3>Research Consulting</h3>
+                    <p>GIS + Economics analysis, spatial econometrics, causal inference, and custom analytical solutions for policy and business.</p>
+                    <div class="price">Custom</div>
+                    <p class="price-note">Project-based pricing</p>
+                    <a href="#contact" class="cta-button">Get Quote</a>
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem; padding: 2rem; background: rgba(87, 94, 207, 0.05); border-left: 3px solid var(--accent); border-radius: 8px;">
+                <h3>What Clients Say</h3>
+                <p style="font-style: italic; margin-top: 1rem;">
+                    "Ian is VERY much worth the money. His ability to break down complex econometric concepts and provide real-world applications is unmatched."
+                </p>
+                <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-light);">— PhD Student, Economics</p>
+            </div>
+        </section>
+
+        <section id="publications">
+            <h2>Selected Publications & Papers</h2>
+
+            <div class="publication">
+                <div class="publication-title">Trade in the Spotlight: Enhancing Gravity Model Predictions with Nightlights and Population-Weighted Distance Measures</div>
+                <div class="publication-meta">
+                    Working Paper, 2026 | Ian Helfrich &nbsp;·&nbsp;
+                    Constructs VIIRS- and LandScan-weighted economic centroids as gravity model distance anchors.
+                    Distance elasticity: −0.734 (PPML) vs −0.625 (standard), N = 122,528, 2015–2020.
+                    Global panel + US interstate (CFS) application. Dataset publicly available.
+                    &nbsp;·&nbsp; <a href="data/centroids.html" style="color: var(--accent);">Dataset →</a>
+                    &nbsp;·&nbsp; <span style="color: var(--text-light);">SSRN preprint forthcoming</span>
+                </div>
+            </div>
+
+            <div class="publication">
+                <div class="publication-title">Nightlights-Weighted and Population-Weighted Economic Centroids: A Global Dataset, 2000–2020</div>
+                <div class="publication-meta">
+                    Data Contribution, 2026 | Ian Helfrich &nbsp;·&nbsp;
+                    VIIRS- and LandScan-weighted mean-center coordinates for ~144 countries,
+                    Eckert IV projection, annual 2000–2020. Zenodo DOI forthcoming.
+                    &nbsp;·&nbsp; <a href="data/centroids.html" style="color: var(--accent);">Download &amp; Documentation →</a>
+                </div>
+            </div>
+
+            <div class="publication">
+                <div class="publication-title">A Unifying Framework for Economic Equilibrium and Optimal Transport in Infinite-Dimensional Hilbert Spaces</div>
+                <div class="publication-meta">SSRN, March 2024 | <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4772016" target="_blank" style="color: var(--accent);">View Paper →</a></div>
+            </div>
+
+            <div class="publication">
+                <div class="publication-title">Topological Economics: Endogenous Agglomeration through Field Theory</div>
+                <div class="publication-meta">Working Paper, 2025 | Production-ready computational framework</div>
+            </div>
+
+            <div class="publication">
+                <div class="publication-title">Energy Externalities and Distributional Effects: Evidence from Texas</div>
+                <div class="publication-meta">In Progress, 2025 | Co-authored with David Park</div>
+            </div>
+
+            <div class="publication">
+                <div class="publication-title">Trade Networks and Gravity: A Topological Approach</div>
+                <div class="publication-meta">PhD Dissertation, Georgia Tech, 2024</div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <h2>Get In Touch</h2>
+            <p style="font-size: 1.1rem; margin-bottom: 2rem;">
+                Available for tutoring, consulting, and research collaboration. Based in St. Louis/Georgia, working with clients worldwide.
+            </p>
+
+            <div class="contact-links">
+                <a href="mailto:ianthelfrich@gmail.com">Email</a>
+                <a href="https://www.linkedin.com/in/ian-helfrich/" target="_blank">LinkedIn</a>
+                <a href="https://scholar.google.com/citations?user=Z_Jh_HEAAAAJ&hl=en" target="_blank">Google Scholar</a>
+                <a href="https://www.wyzant.com/Tutors/IanHelfrich" target="_blank">Wyzant</a>
+                <a href="https://ianhelfrich.com" target="_blank">Personal Site</a>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 Dr. Ian Helfrich. All rights reserved.</p>
+            <p style="margin-top: 1rem; opacity: 0.6;">Economist | GIS Specialist | Research Consultant</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Economic Centroids Dataset | Ian Helfrich</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-dark: #1b1b1b;
+            --text-light: #c5c1b9;
+            --text-lighter: #dcdad5;
+            --accent: #575ECF;
+            --divider: rgba(255, 255, 255, 0.04);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
+        header { padding: 3rem 0 2rem; border-bottom: 1px solid var(--divider); }
+        .breadcrumb { font-size: 0.875rem; margin-bottom: 1.5rem; }
+        .breadcrumb a { color: var(--accent); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        h1 { font-size: 2.5rem; font-weight: 200; color: var(--text-lighter); margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+        .byline { font-size: 1rem; color: var(--text-light); margin-bottom: 1.5rem; }
+        .doi-box {
+            background: rgba(87, 94, 207, 0.08);
+            border: 1px solid rgba(87, 94, 207, 0.25);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .doi-box strong { color: var(--text-lighter); }
+        section { padding: 2.5rem 0; border-bottom: 1px solid var(--divider); }
+        h2 { font-size: 1.5rem; font-weight: 300; color: var(--text-lighter); margin-bottom: 1.25rem; }
+        h3 { font-size: 1.1rem; font-weight: 500; color: var(--text-lighter); margin: 1.5rem 0 0.75rem; }
+        p { margin-bottom: 1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.4rem; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            background: rgba(255,255,255,0.06);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.875em;
+            color: var(--text-lighter);
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--divider);
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin: 1rem 0 1.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.9rem;
+        }
+        th {
+            text-align: left;
+            padding: 0.6rem 1rem;
+            background: rgba(87, 94, 207, 0.1);
+            color: var(--text-lighter);
+            font-weight: 500;
+            border-bottom: 1px solid rgba(87, 94, 207, 0.2);
+        }
+        td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--divider);
+            color: var(--text-light);
+        }
+        tr:last-child td { border-bottom: none; }
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .download-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--divider);
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: border-color 0.2s;
+        }
+        .download-card:hover { border-color: rgba(87,94,207,0.4); }
+        .download-card h3 { margin-top: 0; font-size: 1rem; }
+        .download-card p { font-size: 0.875rem; margin-bottom: 0.75rem; }
+        .btn {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #6b72d9; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(87,94,207,0.5);
+            color: var(--accent);
+        }
+        .btn-outline:hover { background: rgba(87,94,207,0.1); }
+        .tag {
+            display: inline-block;
+            background: rgba(87,94,207,0.12);
+            border: 1px solid rgba(87,94,207,0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--text-lighter);
+            margin-right: 0.4rem;
+            margin-bottom: 0.4rem;
+        }
+        .citation-block {
+            background: rgba(0,0,0,0.25);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1.25rem 1.5rem;
+            font-size: 0.875rem;
+            line-height: 1.7;
+            margin: 1rem 0;
+        }
+        footer { padding: 2rem 0; text-align: center; font-size: 0.875rem; color: var(--text-light); opacity: 0.7; }
+        a { color: var(--accent); }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <div class="breadcrumb">
+            <a href="../index.html">Ian Helfrich</a> &rsaquo; Data
+        </div>
+        <h1>Nightlights &amp; Population-Weighted Economic Centroids</h1>
+        <p class="byline">Ian Helfrich &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; Global panel, annual, 2000–2020</p>
+        <div>
+            <span class="tag">VIIRS Nightlights</span>
+            <span class="tag">LandScan Population</span>
+            <span class="tag">Gravity Models</span>
+            <span class="tag">International Trade</span>
+            <span class="tag">Eckert IV Projection</span>
+            <span class="tag">~144 Countries</span>
+        </div>
+        <div class="doi-box">
+            <strong>DOI:</strong> Zenodo deposit forthcoming &nbsp;·&nbsp;
+            <strong>License:</strong> CC BY 4.0 &nbsp;·&nbsp;
+            <strong>Paper:</strong> <em>Trade in the Spotlight</em> (Helfrich, 2026) — SSRN preprint forthcoming
+        </div>
+    </header>
+
+    <section>
+        <h2>What is this dataset?</h2>
+        <p>
+            Standard gravity model distance calculations anchor bilateral distances at arbitrary reference points —
+            the capital city, the most-populated city, or the simple geographic centroid. For large, economically
+            heterogeneous countries (US, China, Brazil, Russia, India), these choices can differ by hundreds or
+            thousands of kilometers from where economic activity is actually concentrated.
+        </p>
+        <p>
+            This dataset provides two theoretically motivated alternatives for every country in the sample,
+            computed annually from satellite and gridded population data:
+        </p>
+        <ul>
+            <li><strong>VIIRS-weighted centroid</strong> — luminosity-weighted mean center from NASA/NOAA VIIRS DNB nighttime lights. Proxies the spatial concentration of economic production.</li>
+            <li><strong>LandScan-weighted centroid</strong> — population-weighted mean center from ORNL LandScan Global. Captures where people (and therefore demand) are located.</li>
+        </ul>
+        <p>
+            The asymmetric cross-weighting — origin by VIIRS, destination by LandScan — is theoretically motivated:
+            exporters ship from where production is concentrated; importers receive at population centers.
+            Applied to BACI-CEPII data via PPML, this measure yields a distance elasticity of −0.734 versus
+            −0.625 for simple population-city distance (N = 122,528 dyad-year observations).
+        </p>
+    </section>
+
+    <section>
+        <h2>Coverage &amp; Variables</h2>
+        <table>
+            <tr><th>Dimension</th><th>Details</th></tr>
+            <tr><td>Countries</td><td>~144 (exact count in documentation)</td></tr>
+            <tr><td>Years</td><td>2000, 2004, 2010, 2012, 2015, 2017, 2020</td></tr>
+            <tr><td>Projection</td><td>Eckert IV equal-area (EPSG:54012), coordinates also in WGS84</td></tr>
+            <tr><td>Source: luminosity</td><td>VIIRS DNB monthly composites (NOAA/NESDIS EOG), annual stray-light-corrected</td></tr>
+            <tr><td>Source: population</td><td>LandScan Global 30 arc-sec ambient population (ORNL)</td></tr>
+            <tr><td>Boundary source</td><td>Natural Earth 1:10m admin-0, uninhabited territories excluded</td></tr>
+            <tr><td>Software</td><td>ArcGIS Pro (weighted mean center), Python (Haversine distances)</td></tr>
+        </table>
+
+        <h3>Schema (per row)</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+            <tr><td><code>iso3</code></td><td>string</td><td>ISO 3166-1 alpha-3 country code</td></tr>
+            <tr><td><code>year</code></td><td>int</td><td>Reference year</td></tr>
+            <tr><td><code>viirs_lon</code></td><td>float</td><td>VIIRS-weighted centroid longitude (WGS84, decimal degrees)</td></tr>
+            <tr><td><code>viirs_lat</code></td><td>float</td><td>VIIRS-weighted centroid latitude (WGS84, decimal degrees)</td></tr>
+            <tr><td><code>ls_lon</code></td><td>float</td><td>LandScan-weighted centroid longitude (WGS84, decimal degrees)</td></tr>
+            <tr><td><code>ls_lat</code></td><td>float</td><td>LandScan-weighted centroid latitude (WGS84, decimal degrees)</td></tr>
+            <tr><td><code>viirs_to_ls_km</code></td><td>float</td><td>Origin-VIIRS to destination-LandScan Haversine distance (km), all pairs</td></tr>
+        </table>
+    </section>
+
+    <section>
+        <h2>Downloads</h2>
+        <div class="download-grid">
+            <div class="download-card">
+                <h3>Centroid Coordinates (CSV)</h3>
+                <p>VIIRS- and LandScan-weighted centroids, all countries × years. ~144 countries × 7 years.</p>
+                <a href="#" class="btn">Download CSV</a>
+                <span style="display:block; font-size:0.75rem; margin-top:0.5rem; opacity:0.6;">Zenodo deposit forthcoming</span>
+            </div>
+            <div class="download-card">
+                <h3>Origin–Destination Distance Tables (Excel)</h3>
+                <p>Pairwise Haversine distances between all country centroids, per year. ArcGIS near-table output.</p>
+                <a href="#" class="btn">Download OD Tables</a>
+                <span style="display:block; font-size:0.75rem; margin-top:0.5rem; opacity:0.6;">Zenodo deposit forthcoming</span>
+            </div>
+            <div class="download-card">
+                <h3>Shapefiles (ZIP)</h3>
+                <p>Point shapefiles in Eckert IV projection. Separate files for VIIRS-weighted and LandScan-weighted centroids per year.</p>
+                <a href="#" class="btn">Download Shapefiles</a>
+                <span style="display:block; font-size:0.75rem; margin-top:0.5rem; opacity:0.6;">Zenodo deposit forthcoming</span>
+            </div>
+            <div class="download-card">
+                <h3>Stata .dta Format</h3>
+                <p>Ready to merge with BACI-CEPII or CEPII Gravity on <code>iso3 + year</code>. Includes variable labels.</p>
+                <a href="#" class="btn">Download .dta</a>
+                <span style="display:block; font-size:0.75rem; margin-top:0.5rem; opacity:0.6;">Zenodo deposit forthcoming</span>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Usage Example</h2>
+        <h3>Stata — merge into BACI + CEPII gravity</h3>
+        <pre><span style="color:#888">// Load centroids</span>
+use "centroids_viirs_ls.dta", clear
+
+<span style="color:#888">// Merge origin VIIRS centroid</span>
+rename iso3 iso3_o
+rename viirs_lon viirs_lon_o
+rename viirs_lat viirs_lat_o
+merge m:1 iso3_o year using baci_cepii, keep(match)
+
+<span style="color:#888">// Merge destination LandScan centroid</span>
+rename iso3_o iso3_d
+... <span style="color:#888">// same pattern for destination</span>
+
+<span style="color:#888">// Compute Haversine distance (km)</span>
+<span style="color:#888">// — or use the pre-computed viirs_to_ls_km field directly</span>
+gen ln_dist_vl = ln(viirs_to_ls_km)
+
+<span style="color:#888">// PPML estimation</span>
+ppmlhdfe trade ln_dist_vl contiguity comlang_off col_ever rta, ///
+    absorb(iso3_o#year iso3_d#year) cluster(iso3_o#iso3_d)</pre>
+
+        <h3>Python — quick distance check</h3>
+        <pre>import pandas as pd
+from math import radians, sin, cos, sqrt, atan2
+
+df = pd.read_csv("centroids_viirs_ls.csv")
+
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat/2)**2 + cos(radians(lat1))*cos(radians(lat2))*sin(dlon/2)**2
+    return 2 * R * atan2(sqrt(a), sqrt(1-a))
+
+<span style="color:#888"># Example: US VIIRS centroid → Germany LandScan centroid, 2017</span>
+usa = df[(df.iso3=="USA") & (df.year==2017)].iloc[0]
+deu = df[(df.iso3=="DEU") & (df.year==2017)].iloc[0]
+dist = haversine(usa.viirs_lat, usa.viirs_lon, deu.ls_lat, deu.ls_lon)
+print(f"US→DE distance: {dist:.0f} km")</pre>
+    </section>
+
+    <section>
+        <h2>How to Cite</h2>
+        <div class="citation-block">
+            Helfrich, Ian (2026). <em>Nightlights-Weighted and Population-Weighted Economic Centroids: A Global Dataset, 2000–2020.</em>
+            [Data set]. Zenodo. https://doi.org/[forthcoming]
+        </div>
+        <p>If using in a gravity model context, please also cite the companion paper:</p>
+        <div class="citation-block">
+            Helfrich, Ian (2026). <em>Trade in the Spotlight: Enhancing Gravity Model Predictions with
+            Nightlights and Population-Weighted Distance Measures.</em>
+            Working paper. https://www.ianhelfrich.com/data/centroids
+        </div>
+        <p>
+            The dataset is released under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>.
+            You may use, remix, and redistribute freely with attribution.
+        </p>
+    </section>
+
+    <section>
+        <h2>Related</h2>
+        <ul>
+            <li><a href="../index.html#publications">Companion paper: <em>Trade in the Spotlight</em> (Helfrich, 2026)</a></li>
+            <li><a href="https://www.cepii.fr/CEPII/en/bdd_modele/presentation.asp?id=8" target="_blank">BACI-CEPII bilateral trade data</a></li>
+            <li><a href="https://www.cepii.fr/CEPII/en/bdd_modele/presentation.asp?id=6" target="_blank">CEPII Gravity dataset (Head &amp; Mayer 2014 measures)</a></li>
+            <li><a href="https://eogdata.mines.edu/products/vnl/" target="_blank">VIIRS DNB monthly composites (NOAA/NESDIS EOG)</a></li>
+            <li><a href="https://landscan.ornl.gov/" target="_blank">LandScan Global Population Distribution (ORNL)</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p><a href="../index.html">← Back to ianhelfrich.com</a></p>
+        <p style="margin-top:0.75rem;">&copy; 2026 Ian Helfrich &nbsp;·&nbsp; CC BY 4.0</p>
+    </footer>
+
+</div>
+</body>
+</html>

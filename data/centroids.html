@@ -137,6 +137,51 @@
         }
         footer { padding: 2rem 0; text-align: center; font-size: 0.875rem; color: var(--text-light); opacity: 0.7; }
         a { color: var(--accent); }
+
+        /* Access Request Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #1f1f1f;
+            border: 1px solid rgba(87,94,207,0.3);
+            border-radius: 14px;
+            padding: 2.5rem;
+            max-width: 520px;
+            width: 90%;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+        }
+        .modal h2 { font-size: 1.35rem; font-weight: 400; color: var(--text-lighter); margin-bottom: 0.5rem; }
+        .modal p { font-size: 0.875rem; margin-bottom: 1.5rem; color: var(--text-light); }
+        .modal label { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-light); margin-bottom: 0.35rem; margin-top: 1rem; }
+        .modal input, .modal textarea, .modal select {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            padding: 0.6rem 0.9rem;
+            color: var(--text-lighter);
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        .modal textarea { resize: vertical; min-height: 80px; }
+        .modal input:focus, .modal textarea:focus, .modal select:focus {
+            outline: none;
+            border-color: rgba(87,94,207,0.6);
+        }
+        .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.75rem; justify-content: flex-end; }
+        .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--text-light); cursor: pointer; padding: 0.5rem 1.25rem; border-radius: 6px; font-size: 0.875rem; }
+        .btn-submit { background: var(--accent); border: none; color: white; cursor: pointer; padding: 0.5rem 1.5rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; }
+        .btn-submit:hover { background: #6b72d9; }
+        .access-note { font-size: 0.78rem; color: var(--text-light); opacity: 0.7; margin-top: 0.5rem; font-style: italic; }
     </style>
 </head>
 <body>
@@ -215,30 +260,34 @@
 
     <section>
         <h2>Downloads</h2>
+        <p style="font-size:0.9rem; margin-bottom:1.5rem; padding: 1rem 1.25rem; background: rgba(87,94,207,0.07); border-left: 3px solid rgba(87,94,207,0.5); border-radius: 0 8px 8px 0;">
+            This dataset required substantial ArcGIS Pro processing and is shared selectively for academic research.
+            Request access below — turnaround is typically 1–2 business days.
+        </p>
         <div class="download-grid">
             <div class="download-card">
                 <h3>Centroid Coordinates (CSV)</h3>
                 <p>VIIRS- and LandScan-weighted centroids, all countries × years. ~144 countries × 7 years.</p>
-                <a href="#" class="btn">Download CSV</a>
-                <span style="display:block; font-size:0.75rem; margin-top:0.5rem; opacity:0.6;">Zenodo deposit forthcoming</span>
+                <button class="btn" onclick="openModal('Centroid Coordinates (CSV)')">Request Access</button>
+                <span class="access-note">Academic use · approval required</span>
             </div>
             <div class="download-card">
                 <h3>Origin–Destination Distance Tables (Excel)</h3>
                 <p>Pairwise Haversine distances between all country centroids, per year. ArcGIS near-table output.</p>
-                <a href="#" class="btn">Download OD Tables</a>
-                <span style="display:block; font-size:0.75rem; margin-top:0.5rem; opacity:0.6;">Zenodo deposit forthcoming</span>
+                <button class="btn" onclick="openModal('OD Distance Tables (Excel)')">Request Access</button>
+                <span class="access-note">Academic use · approval required</span>
             </div>
             <div class="download-card">
                 <h3>Shapefiles (ZIP)</h3>
                 <p>Point shapefiles in Eckert IV projection. Separate files for VIIRS-weighted and LandScan-weighted centroids per year.</p>
-                <a href="#" class="btn">Download Shapefiles</a>
-                <span style="display:block; font-size:0.75rem; margin-top:0.5rem; opacity:0.6;">Zenodo deposit forthcoming</span>
+                <button class="btn" onclick="openModal('Shapefiles (ZIP)')">Request Access</button>
+                <span class="access-note">Academic use · approval required</span>
             </div>
             <div class="download-card">
                 <h3>Stata .dta Format</h3>
                 <p>Ready to merge with BACI-CEPII or CEPII Gravity on <code>iso3 + year</code>. Includes variable labels.</p>
-                <a href="#" class="btn">Download .dta</a>
-                <span style="display:block; font-size:0.75rem; margin-top:0.5rem; opacity:0.6;">Zenodo deposit forthcoming</span>
+                <button class="btn" onclick="openModal('Stata .dta Format')">Request Access</button>
+                <span class="access-note">Academic use · approval required</span>
             </div>
         </div>
     </section>
@@ -322,5 +371,66 @@ print(f"US→DE distance: {dist:.0f} km")</pre>
     </footer>
 
 </div>
+
+<!-- Access Request Modal -->
+<div class="modal-overlay" id="accessModal">
+    <div class="modal">
+        <h2>Request Dataset Access</h2>
+        <p>This dataset is shared selectively for academic research. Please describe your intended use and I'll follow up within 1–2 business days.</p>
+
+        <input type="hidden" id="requestedFile" value="">
+
+        <label for="reqName">Full Name</label>
+        <input type="text" id="reqName" placeholder="Your name">
+
+        <label for="reqInstitution">Institution / Organization</label>
+        <input type="text" id="reqInstitution" placeholder="University, company, or independent researcher">
+
+        <label for="reqEmail">Email Address</label>
+        <input type="email" id="reqEmail" placeholder="you@institution.edu">
+
+        <label for="reqUse">Intended Use</label>
+        <textarea id="reqUse" placeholder="Briefly describe your research project and how you plan to use this dataset. Please include the paper or project title if applicable."></textarea>
+
+        <div class="modal-actions">
+            <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn-submit" onclick="submitRequest()">Send Request</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openModal(filename) {
+    document.getElementById('requestedFile').value = filename;
+    document.getElementById('accessModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+    document.getElementById('accessModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+function submitRequest() {
+    const name = document.getElementById('reqName').value.trim();
+    const institution = document.getElementById('reqInstitution').value.trim();
+    const email = document.getElementById('reqEmail').value.trim();
+    const use = document.getElementById('reqUse').value.trim();
+    const file = document.getElementById('requestedFile').value;
+
+    if (!name || !email || !use) {
+        alert('Please fill in your name, email, and intended use.');
+        return;
+    }
+
+    const subject = encodeURIComponent(`Dataset Access Request: ${file}`);
+    const body = encodeURIComponent(
+        `Dataset Requested: ${file}\n\nName: ${name}\nInstitution: ${institution}\nEmail: ${email}\n\nIntended Use:\n${use}\n\n---\nSent from ianhelfrich.com/data/centroids`
+    );
+    window.location.href = `mailto:ianthelfrich@gmail.com?subject=${subject}&body=${body}`;
+    closeModal();
+}
+document.getElementById('accessModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+</script>
 </body>
 </html>
